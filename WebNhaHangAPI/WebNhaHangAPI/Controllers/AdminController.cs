@@ -6,7 +6,7 @@ namespace WebNhaHangAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin")] // 2. THÊM DÒNG NÀY: Chỉ ai có quyền Admin mới được vào controller này
+    [Authorize(Roles = "Admin")] //Chỉ ai có quyền Admin mới được vào controller này
     public class AdminController : ControllerBase
     {
         private readonly UserManager<IdentityUser> _userManager;

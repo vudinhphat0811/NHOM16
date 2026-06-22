@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebNhaHangAPI.Data;
 
@@ -11,9 +12,11 @@ using WebNhaHangAPI.Data;
 namespace WebNhaHangAPI.Migrations
 {
     [DbContext(typeof(DbContextNhaHang))]
-    partial class DbContextNhaHangModelSnapshot : ModelSnapshot
+    [Migration("20260622045054_ThemBangBanAn")]
+    partial class ThemBangBanAn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -226,9 +229,6 @@ namespace WebNhaHangAPI.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("KhuVucId")
-                        .HasColumnType("int");
-
                     b.Property<int>("SoChoNgoi")
                         .HasColumnType("int");
 
@@ -242,76 +242,7 @@ namespace WebNhaHangAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("KhuVucId");
-
                     b.ToTable("DanhSachBanAn");
-                });
-
-            modelBuilder.Entity("WebNhaHangAPI.Models.DanhMuc", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("TenDanhMuc")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("DanhSachDanhMuc");
-                });
-
-            modelBuilder.Entity("WebNhaHangAPI.Models.KhuVuc", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("TenKhuVuc")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("DanhSachKhuVuc");
-                });
-
-            modelBuilder.Entity("WebNhaHangAPI.Models.MonAn", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("DanhMucId")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("Gia")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("HinhAnh")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("MoTa")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("TenMon")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DanhMucId");
-
-                    b.ToTable("DanhSachMonAn");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -363,38 +294,6 @@ namespace WebNhaHangAPI.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("WebNhaHangAPI.Models.BanAn", b =>
-                {
-                    b.HasOne("WebNhaHangAPI.Models.KhuVuc", "KhuVuc")
-                        .WithMany("BanAns")
-                        .HasForeignKey("KhuVucId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("KhuVuc");
-                });
-
-            modelBuilder.Entity("WebNhaHangAPI.Models.MonAn", b =>
-                {
-                    b.HasOne("WebNhaHangAPI.Models.DanhMuc", "DanhMuc")
-                        .WithMany("MonAns")
-                        .HasForeignKey("DanhMucId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("DanhMuc");
-                });
-
-            modelBuilder.Entity("WebNhaHangAPI.Models.DanhMuc", b =>
-                {
-                    b.Navigation("MonAns");
-                });
-
-            modelBuilder.Entity("WebNhaHangAPI.Models.KhuVuc", b =>
-                {
-                    b.Navigation("BanAns");
                 });
 #pragma warning restore 612, 618
         }

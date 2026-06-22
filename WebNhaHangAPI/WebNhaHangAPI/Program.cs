@@ -18,7 +18,7 @@ builder.Services.Configure<IdentityOptions>(options =>
 {
     options.ClaimsIdentity.RoleClaimType = System.Security.Claims.ClaimTypes.Role;
 });
-
+builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
@@ -73,7 +73,7 @@ using (var scope = app.Services.CreateScope())
         }
     }
 
-    var adminUser = await userManager.FindByEmailAsync("admi@gmail.com");
+    var adminUser = await userManager.FindByEmailAsync("admin@gmail.com");
     if (adminUser != null)
     {
         if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
