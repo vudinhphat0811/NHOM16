@@ -17,6 +17,7 @@ namespace WebNhaHangAPI.Controllers
             _roleManager = roleManager;
         }
 
+        // Endpoint gán quyền gốc (Giữ nguyên bảo mật chỉ Admin được gọi)
         [HttpPost("set-role")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> SetRole([FromBody] RequestGanQuyen model)
@@ -42,11 +43,12 @@ namespace WebNhaHangAPI.Controllers
             return BadRequest(new { message = "Cấp quyền thất bại!", errors = result.Errors });
         }
 
+        // --- ENDPOINT MỚI: LẤY VAI TRÒ CỦA USER HIỆN TẠI ---
         [HttpGet("current-user-role")]
-        [Authorize] 
+        [Authorize] // Chỉ cần đăng nhập (có token hợp lệ) là được gọi
         public async Task<IActionResult> GetCurrentUserRole()
         {
-       
+            // Lấy email từ Identity Claim mã hóa trong Token gửi lên
             var userEmail = User.Identity?.Name;
             if (string.IsNullOrEmpty(userEmail))
             {
@@ -59,12 +61,13 @@ namespace WebNhaHangAPI.Controllers
                 return NotFound(new { message = "Không tìm thấy thông tin tài khoản!" });
             }
 
+            // Lấy danh sách Roles của User
             var roles = await _userManager.GetRolesAsync(user);
 
             return Ok(new
             {
                 email = user.Email,
-                roles = roles 
+                roles = roles // Trả về mảng dạng ["Admin"] hoặc ["KhachHang"]
             });
         }
     }
