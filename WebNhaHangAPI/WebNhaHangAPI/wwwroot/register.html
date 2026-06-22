@@ -1,0 +1,156 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gourmet Booking - Đăng ký tài khoản</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-800 min-h-screen flex flex-col md:flex-row">
+
+    <div id="toast-container" class="fixed top-5 right-5 z-50 space-y-3 pointer-events-none"></div>
+
+    <div class="relative w-full md:w-[45%] lg:w-[40%] min-h-[300px] md:min-h-screen bg-cover bg-center flex flex-col justify-between p-8 md:p-12 text-white shrink-0"
+         style="background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80');">
+
+        <div class="text-xl font-bold tracking-wide">
+            Gourmet Booking
+        </div>
+
+        <div class="max-w-md mt-auto md:mb-12">
+            <h1 class="text-4xl font-extrabold mb-4 leading-tight">Gourmet Booking</h1>
+            <p class="text-gray-300 text-sm leading-relaxed font-medium">
+                Hệ thống đặt bàn và gọi món trước chuyên nghiệp. Đăng ký tài khoản để lưu lịch sử, nhận điểm thưởng và trải nghiệm vô vàn ưu đãi đặc quyền.
+            </p>
+        </div>
+    </div>
+
+    <div class="flex-1 flex flex-col justify-between p-6 md:p-12 bg-white">
+
+        <div class="flex justify-end space-x-6 text-sm font-semibold text-gray-600">
+            <a href="/" class="hover:text-amber-700 transition">Trang chủ</a>
+            <a href="/dang-nhap" class="hover:text-amber-700 transition">Đăng nhập</a>
+        </div>
+
+        <div class="w-full max-w-md mx-auto my-auto py-8">
+            <div class="mb-6">
+                <h2 class="text-3xl font-extrabold text-gray-900 mb-2 tracking-tight">Tạo tài khoản mới</h2>
+                <p class="text-xs text-gray-400 font-medium">Trở thành thành viên của Gourmet Booking chỉ trong vài bước đơn giản.</p>
+            </div>
+
+            <div class="flex border-b border-gray-100 text-sm font-bold text-center mb-6">
+                <button onclick="window.location.href='/dang-nhap'" class="w-1/2 text-gray-400 hover:text-gray-600 pb-3 px-1 transition cursor-pointer">Đăng nhập</button>
+                <button onclick="window.location.href='/dang-ky'" class="w-1/2 text-[#a13d06] border-b-2 border-[#a13d06] pb-3 px-1 transition cursor-pointer">Đăng ký</button>
+            </div>
+
+            <form id="formDangKy" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1.5">Họ và tên</label>
+                    <input type="text" placeholder="Nguyễn Văn A" class="w-full bg-gray-50/50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-700 focus:outline-none focus:border-[#a13d06] focus:bg-white transition placeholder-gray-300">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1.5">Số điện thoại</label>
+                    <input type="tel" placeholder="0912 345 678" class="w-full bg-gray-50/50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-700 focus:outline-none focus:border-[#a13d06] focus:bg-white transition placeholder-gray-300">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1.5">Email của bạn</label>
+                    <input type="email" id="txtEmail" required placeholder="example@email.com" class="w-full bg-gray-50/50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-700 focus:outline-none focus:border-[#a13d06] focus:bg-white transition placeholder-gray-300">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1.5">Mật khẩu</label>
+                    <input type="password" id="txtMatKhau" required placeholder="Tối thiểu 6 ký tự" class="w-full bg-gray-50/50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-700 focus:outline-none focus:border-[#a13d06] focus:bg-white transition placeholder-gray-300">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1.5">Xác nhận mật khẩu</label>
+                    <input type="password" id="txtXacNhanMatKhau" required placeholder="Nhập lại mật khẩu" class="w-full bg-gray-50/50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-700 focus:outline-none focus:border-[#a13d06] focus:bg-white transition placeholder-gray-300">
+                </div>
+
+                <div class="flex items-start text-xs font-semibold pt-1">
+                    <label class="flex items-start space-x-2 text-gray-500 cursor-pointer select-none leading-tight">
+                        <input type="checkbox" required class="w-4 h-4 mt-0.5 rounded text-[#a13d06] border-gray-300 focus:ring-0 accent-[#a13d06] shrink-0">
+                        <span>Tôi đồng ý với các <a href="#" class="text-[#a13d06] hover:underline">Điều khoản dịch vụ</a> và <a href="#" class="text-[#a13d06] hover:underline">Chính sách bảo mật</a> của Gourmet Booking.</span>
+                    </label>
+                </div>
+
+                <button type="submit" class="w-full bg-[#e65100] text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-[#bf4300] transition duration-200 text-sm mt-4 cursor-pointer">
+                    Đăng ký tài khoản
+                </button>
+            </form>
+
+            <p class="text-center text-xs text-gray-400 font-medium mt-6">
+                Đã có tài khoản? <a href="/dang-nhap" class="text-[#e65100] font-bold hover:underline ml-1">Đăng nhập ngay</a>
+            </p>
+        </div>
+
+        <div class="hidden md:block h-6"></div>
+    </div>
+
+    <script>
+        // Hàm hiển thị thông báo Toast góc màn hình
+        function showToast(message, type = 'success') {
+            const container = document.getElementById("toast-container");
+            const bgColor = type === 'success' ? 'bg-emerald-500' : 'bg-rose-500';
+            const icon = type === 'success'
+                ? '<i class="fa-solid fa-circle-check text-lg"></i>'
+                : '<i class="fa-solid fa-circle-xmark text-lg"></i>';
+
+            const toast = document.createElement("div");
+            toast.className = `flex items-center space-x-3 ${bgColor} text-white text-sm font-bold px-5 py-3.5 rounded-xl shadow-lg transform translate-x-full opacity-0 transition-all duration-300 ease-out pointer-events-auto min-w-[280px]`;
+            toast.innerHTML = `<span>${icon}</span><span class="flex-1">${message}</span>`;
+
+            container.appendChild(toast);
+
+            setTimeout(() => { toast.classList.remove("translate-x-full", "opacity-0"); }, 10);
+
+            setTimeout(() => {
+                toast.classList.add("translate-x-full", "opacity-0");
+                setTimeout(() => { toast.remove(); }, 300);
+            }, 3000);
+        }
+
+        // Xử lý sự kiện đăng ký tài khoản
+        document.getElementById("formDangKy").addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const email = document.getElementById("txtEmail").value;
+            const password = document.getElementById("txtMatKhau").value;
+            const confirmPassword = document.getElementById("txtXacNhanMatKhau").value;
+
+            if (password !== confirmPassword) {
+                showToast("Mật khẩu xác nhận không trùng khớp!", "error");
+                return;
+            }
+
+            try {
+                const response = await fetch("/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: email, password: password })
+                });
+
+                if (response.ok) {
+                    showToast("Đăng ký tài khoản thành công!", "success");
+                    setTimeout(() => {
+                        window.location.href = "/dang-nhap";
+                    }, 1500);
+                } else {
+                    showToast("Mật khẩu phải tối thiểu 6 ký tự, chứa chữ Hoa, chữ Số và ký tự đặc biệt!", "error");
+                }
+            } catch (error) {
+                console.error("Lỗi kết nối:", error);
+                showToast("Không thể kết nối đến hệ thống máy chủ!", "error");
+            }
+        });
+    </script>
+</body>
+</html>

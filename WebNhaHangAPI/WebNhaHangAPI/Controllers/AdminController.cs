@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization; // 1. THÊM DÒNG NÀY
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,7 +6,6 @@ namespace WebNhaHangAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin")] //Chỉ ai có quyền Admin mới được vào controller này
     public class AdminController : ControllerBase
     {
         private readonly UserManager<IdentityUser> _userManager;
@@ -19,6 +18,7 @@ namespace WebNhaHangAPI.Controllers
         }
 
         [HttpPost("set-role")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> SetRole([FromBody] RequestGanQuyen model)
         {
             var user = await _userManager.FindByEmailAsync(model.Email);
@@ -40,6 +40,32 @@ namespace WebNhaHangAPI.Controllers
             }
 
             return BadRequest(new { message = "Cấp quyền thất bại!", errors = result.Errors });
+        }
+
+        [HttpGet("current-user-role")]
+        [Authorize] 
+        public async Task<IActionResult> GetCurrentUserRole()
+        {
+       
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail))
+            {
+                userEmail = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+            }
+
+            var user = await _userManager.FindByEmailAsync(userEmail);
+            if (user == null)
+            {
+                return NotFound(new { message = "Không tìm thấy thông tin tài khoản!" });
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+
+            return Ok(new
+            {
+                email = user.Email,
+                roles = roles 
+            });
         }
     }
 

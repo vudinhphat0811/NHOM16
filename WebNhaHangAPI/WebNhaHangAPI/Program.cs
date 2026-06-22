@@ -6,7 +6,6 @@ using WebNhaHangAPI.Data;
 var builder = WebApplication.CreateBuilder(args);
 
 var chuoiKetNoi = "server=127.0.0.1;port=3306;database=web_dat_ban_nha_hang;user=root;password=123456";
-
 builder.Services.AddDbContext<DbContextNhaHang>(options =>
     options.UseMySql(chuoiKetNoi, ServerVersion.AutoDetect(chuoiKetNoi)));
 
@@ -18,7 +17,19 @@ builder.Services.Configure<IdentityOptions>(options =>
 {
     options.ClaimsIdentity.RoleClaimType = System.Security.Claims.ClaimTypes.Role;
 });
+
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
@@ -47,8 +58,33 @@ var app = builder.Build();
 
 app.UseHttpsRedirection();
 
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path.Value;
+
+    if (string.Equals(path, "/", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(path, "/trang-chu", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Request.Path = "/index.html";
+    }
+    else if (string.Equals(path, "/dang-nhap", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Request.Path = "/login.html";
+    }
+    else if (string.Equals(path, "/dang-ky", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Request.Path = "/register.html";
+    }
+
+    await next();
+});
+
+app.UseStaticFiles();
+
+app.UseCors("AllowAll");
+
 app.UseAuthentication();
-app.UseAuthorization(); 
+app.UseAuthorization();
 
 if (app.Environment.IsDevelopment())
 {

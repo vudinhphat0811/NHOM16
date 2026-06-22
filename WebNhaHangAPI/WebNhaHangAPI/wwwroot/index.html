@@ -1,0 +1,221 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gourmet Booking - Thực Đơn Tinh Hoa</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body class="text-gray-800 antialiased">
+
+    <div id="toast-container" class="fixed top-5 right-5 z-50 space-y-3 pointer-events-none"></div>
+
+    <div id="logoutModal" class="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 hidden opacity-0 transition-opacity duration-300 pointer-events-auto">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl transform scale-95 transition-transform duration-300">
+            <div class="text-center">
+                <div class="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4 text-[#a13d06]">
+                    <i class="fa-solid fa-arrow-right-from-bracket text-xl"></i>
+                </div>
+                <h3 class="text-lg font-extrabold text-gray-900 mb-2">Xác nhận đăng xuất</h3>
+                <p class="text-sm text-gray-500 font-medium leading-relaxed mb-6">Bạn có chắc chắn muốn thoát tài khoản Gourmet Booking không?</p>
+            </div>
+            <div class="flex space-x-3 text-sm font-bold">
+                <button onclick="closeLogoutModal()" class="w-1/2 border border-gray-200 text-gray-500 py-2.5 rounded-xl hover:bg-gray-50 transition cursor-pointer">
+                    Hủy bỏ
+                </button>
+                <button onclick="confirmLogout()" class="w-1/2 bg-rose-600 text-white py-2.5 rounded-xl hover:bg-rose-700 shadow-md shadow-rose-200 transition cursor-pointer">
+                    Đăng xuất
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <header class="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between sticky top-0 z-40 shadow-xs">
+        <div class="text-[#a13d06] font-bold text-xl tracking-tight cursor-pointer" onclick="window.location.href='/'">
+            GourmetBooking
+        </div>
+
+        <nav class="hidden md:flex space-x-8 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <a href="/" class="text-[#a13d06] border-b-2 border-[#a13d06] pb-1">Home</a>
+            <a href="#" class="hover:text-[#a13d06] transition">Menu</a>
+            <a href="#" class="hover:text-[#a13d06] transition">Space</a>
+            <a href="#" class="hover:text-[#a13d06] transition">Contact</a>
+        </nav>
+
+        <div class="flex items-center space-x-4 text-xs font-bold shrink-0">
+            <div id="authArea" class="flex items-center">
+                <a href="/dang-nhap" class="text-gray-600 hover:text-gray-900 transition">Login</a>
+            </div>
+            <a href="#" class="bg-[#d35400] text-white px-5 py-2 rounded shadow hover:bg-[#b34700] transition whitespace-nowrap shrink-0">
+                Đặt bàn ngay
+            </a>
+        </div>
+    </header>
+
+    <section class="relative h-64 md:h-80 bg-cover bg-center flex items-center justify-center text-center px-4"
+             style="background-image: linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.65)), url('https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=80');">
+        <div class="max-w-2xl text-white">
+            <h1 class="text-3xl md:text-4xl font-extrabold tracking-widest uppercase mb-2">Thực Đơn Tinh Hoa</h1>
+            <p class="text-gray-300 text-xs md:text-sm font-medium max-w-lg mx-auto leading-relaxed">
+                Khám phá hành trình ẩm thực đa giác quan được chế tác bởi những đầu bếp hàng đầu.
+            </p>
+        </div>
+    </section>
+
+    <main class="max-w-6xl mx-auto px-4 py-12 space-y-16">
+        <section class="space-y-6">
+            <div class="flex items-center space-x-4">
+                <h2 class="text-lg font-black uppercase text-gray-900 tracking-wider whitespace-nowrap">Món ăn nổi bật</h2>
+                <div class="w-full h-[1px] bg-gray-200"></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-xs flex flex-col sm:flex-row group">
+                    <div class="sm:w-1/2 h-52 sm:h-auto overflow-hidden shrink-0">
+                        <img src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=500&q=80" alt="Bò Steak" class="w-full h-full object-cover group-hover:scale-103 transition duration-500">
+                    </div>
+                    <div class="p-6 flex flex-col justify-between flex-1">
+                        <div>
+                            <span class="text-[10px] font-bold uppercase text-amber-600 tracking-widest block mb-1">Chef's Choice</span>
+                            <h3 class="text-lg font-extrabold text-gray-900 mb-2">Bò Steak Sốt Tiêu Xanh</h3>
+                            <p class="text-gray-400 text-xs leading-relaxed font-medium">Trải nghiệm hương vị thăn bò Mỹ thượng hạng hòa quyện cùng sốt tiêu xanh đặc trưng.</p>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 mt-auto border-t border-gray-50">
+                            <span class="text-[#a13d06] font-black text-base">450.000đ</span>
+                            <button class="bg-[#a13d06] text-white text-[11px] font-bold px-3 py-2 rounded hover:bg-[#853204] transition flex items-center space-x-1 cursor-pointer">
+                                <span>Thêm vào đơn</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-xs flex flex-col sm:flex-row group">
+                    <div class="sm:w-1/2 h-52 sm:h-auto overflow-hidden shrink-0">
+                        <img src="https://images.unsplash.com/photo-1559742811-82428b49223b?auto=format&fit=crop&w=500&q=80" alt="Tôm Hùm" class="w-full h-full object-cover group-hover:scale-103 transition duration-500">
+                    </div>
+                    <div class="p-6 flex flex-col justify-between flex-1">
+                        <div>
+                            <span class="text-[10px] font-bold uppercase text-amber-600 tracking-widest block mb-1">Signature</span>
+                            <h3 class="text-lg font-extrabold text-gray-900 mb-2">Tôm Hùm Nướng Bơ Tỏi</h3>
+                            <p class="text-gray-400 text-xs leading-relaxed font-medium">Tôm hùm Nha Trang tươi sống nướng cùng bơ Pháp thượng hạng và tỏi Lý Sơn.</p>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 mt-auto border-t border-gray-50">
+                            <span class="text-[#a13d06] font-black text-base">850.000đ</span>
+                            <button class="bg-[#a13d06] text-white text-[11px] font-bold px-3 py-2 rounded hover:bg-[#853204] transition flex items-center space-x-1 cursor-pointer">
+                                <span>Thêm vào đơn</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        function showToast(message, type = 'success') {
+            const container = document.getElementById("toast-container");
+            const bgColor = type === 'success' ? 'bg-emerald-500' : 'bg-rose-500';
+            const icon = type === 'success' ? '<i class="fa-solid fa-circle-check text-lg"></i>' : '<i class="fa-solid fa-circle-xmark text-lg"></i>';
+
+            const toast = document.createElement("div");
+            toast.className = `flex items-center space-x-3 ${bgColor} text-white text-sm font-bold px-5 py-3.5 rounded-xl shadow-lg transform translate-x-full opacity-0 transition-all duration-300 ease-out pointer-events-auto min-w-[280px]`;
+            toast.innerHTML = `<span>${icon}</span><span class="flex-1">${message}</span>`;
+
+            container.appendChild(toast);
+            setTimeout(() => { toast.classList.remove("translate-x-full", "opacity-0"); }, 10);
+            setTimeout(() => {
+                toast.classList.add("translate-x-full", "opacity-0");
+                setTimeout(() => { toast.remove(); }, 300);
+            }, 3000);
+        }
+
+        // XỬ LÝ CHECK VAI TRÒ NGƯỜI DÙNG KHI MỞ TRANG
+        document.addEventListener("DOMContentLoaded", async function () {
+            const token = localStorage.getItem("token");
+            const authArea = document.getElementById("authArea");
+
+            if (token) {
+                try {
+                    // Gọi API kiểm tra xem tài khoản này thuộc phân quyền nào
+                    const response = await fetch("/api/Admin/current-user-role", {
+                        method: "GET",
+                        headers: { "Authorization": `Bearer ${token}` }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+
+                        // Nếu user có chứa Role Admin
+                        if (data.roles && data.roles.includes("Admin")) {
+                            authArea.innerHTML = `
+                                    <div class="flex items-center space-x-3 pr-2 md:pr-4">
+                                        <span class="text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md font-bold whitespace-nowrap border border-amber-200 shadow-xs">
+                                            <i class="fa-solid fa-user-shield mr-1"></i> Quản Lý
+                                        </span>
+                                        <button onclick="window.location.href='/admin/dashboard.html'" class="text-gray-600 hover:text-gray-900 transition font-bold whitespace-nowrap cursor-pointer">
+                                            Trang quản trị
+                                        </button>
+                                        <span class="text-gray-300">|</span>
+                                        <button onclick="openLogoutModal()" class="text-red-600 hover:text-red-800 transition cursor-pointer font-bold whitespace-nowrap">
+                                            Logout
+                                        </button>
+                                    </div>
+                                `;
+                        } else {
+                            // Ngược lại, nếu là tài khoản Khách hàng thường
+                            authArea.innerHTML = `
+                                    <div class="flex items-center space-x-3 pr-2 md:pr-4">
+                                        <span class="text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md font-bold whitespace-nowrap border border-emerald-200 shadow-xs">
+                                            <i class="fa-regular fa-user mr-1"></i> Khách hàng
+                                        </span>
+                                        <button onclick="openLogoutModal()" class="text-red-600 hover:text-red-800 transition cursor-pointer font-bold whitespace-nowrap">
+                                            Logout
+                                        </button>
+                                    </div>
+                                `;
+                        }
+                    } else {
+                        // Nếu token sai, hỏng hoặc hết hạn -> tự xóa sạch để hiển thị Login bình thường
+                        localStorage.removeItem("token");
+                    }
+                } catch (error) {
+                    console.error("Lỗi xác nhận vai trò:", error);
+                }
+            }
+        });
+
+        // ĐIỀU KHIỂN POPUP MODAL ĐĂNG XUẤT ĐỘC QUYỀN
+        function openLogoutModal() {
+            const modal = document.getElementById("logoutModal");
+            modal.classList.remove("hidden");
+            setTimeout(() => {
+                modal.classList.remove("opacity-0");
+                modal.querySelector(".transform").classList.remove("scale-95");
+            }, 10);
+        }
+
+        function closeLogoutModal() {
+            const modal = document.getElementById("logoutModal");
+            modal.classList.add("opacity-0");
+            modal.querySelector(".transform").classList.add("scale-95");
+            setTimeout(() => modal.classList.add("hidden"), 300);
+        }
+
+        function confirmLogout() {
+            closeLogoutModal();
+            localStorage.removeItem("token");
+            showToast("Đã đăng xuất tài khoản thành công!", "success");
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
