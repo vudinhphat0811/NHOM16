@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebNhaHangAPI.Data;
 
@@ -11,9 +12,11 @@ using WebNhaHangAPI.Data;
 namespace WebNhaHangAPI.Migrations
 {
     [DbContext(typeof(DbContextNhaHang))]
-    partial class DbContextNhaHangModelSnapshot : ModelSnapshot
+    [Migration("20260623091416_TaoBangDatBanMoi")]
+    partial class TaoBangDatBanMoi
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

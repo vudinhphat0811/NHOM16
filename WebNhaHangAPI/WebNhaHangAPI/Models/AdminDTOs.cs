@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
 
-namespace WebNhaHangAPI.Models // Hoặc WebNhaHangAPI.DTOs nếu bạn để ở thư mục DTOs
+namespace WebNhaHangAPI.Models 
 {
-    // 1. DTO cho cấp quyền tài khoản
+
     public class RequestGanQuyen
     {
         [Required]
@@ -12,14 +12,12 @@ namespace WebNhaHangAPI.Models // Hoặc WebNhaHangAPI.DTOs nếu bạn để �
         public string TenQuyen { get; set; } = string.Empty;
     }
 
-    // 2. DTO cho Danh mục món ăn
     public class RequestDanhMuc
     {
         [Required]
         public string TenDanhMuc { get; set; } = string.Empty;
     }
 
-    // 3. DTO cho Món ăn (Hỗ trợ upload File ảnh qua Form)
     public class RequestMonAnForm
     {
         [Required]
@@ -28,17 +26,15 @@ namespace WebNhaHangAPI.Models // Hoặc WebNhaHangAPI.DTOs nếu bạn để �
         public double GiaBan { get; set; }
         [Required]
         public int DanhMucId { get; set; }
-        public IFormFile? HinhAnhFile { get; set; } // Nhận file từ client truyền lên
+        public IFormFile? HinhAnhFile { get; set; } 
     }
 
-    // 4. DTO cho Khu vực
     public class RequestKhuVuc
     {
         [Required]
         public string TenKhuVuc { get; set; } = string.Empty;
     }
 
-    // 5. DTO cho Bàn ăn
     public class RequestBanAn
     {
         [Required]
@@ -52,7 +48,6 @@ namespace WebNhaHangAPI.Models // Hoặc WebNhaHangAPI.DTOs nếu bạn để �
         public bool IsChinhThuc { get; set; } = false;
     }
 
-    // 6. DTO cập nhật nhanh tọa độ khi Admin kéo thả bàn ăn
     public class RequestUpdateCoordinates
     {
         [Required]

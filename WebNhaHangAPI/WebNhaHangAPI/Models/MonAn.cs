@@ -1,9 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema; // Bắt buộc phải có dòng này để dùng thuộc tính [Table]
-
+using System.ComponentModel.DataAnnotations.Schema; 
 namespace WebNhaHangAPI.Models
 {
-    // HÃY ĐỔI "danhsachmonan" THÀNH ĐÚNG TÊN BẢNG TRONG MYSQL CỦA BẠN (Ví dụ: "danhsachmonan" hoặc "monan")
+    
     [Table("danhsachmonan")]
     public class MonAn
     {

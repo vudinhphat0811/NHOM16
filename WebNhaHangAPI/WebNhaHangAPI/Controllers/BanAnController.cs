@@ -17,7 +17,6 @@ namespace WebNhaHangAPI.Controllers
             _context = context;
         }
 
-        // 1. LẤY TẤT CẢ BÀN ĂN
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -25,7 +24,6 @@ namespace WebNhaHangAPI.Controllers
             return Ok(danhSach);
         }
 
-        // 2. LẤY BÀN ĂN THEO ID
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -34,7 +32,6 @@ namespace WebNhaHangAPI.Controllers
             return Ok(banAn);
         }
 
-        // 3. THÊM BÀN ĂN MỚI (SỬA ĐỔI THAM SỐ THÀNH RequestBanAn THAY VÌ BanAn)
         [HttpPost]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] RequestBanAn model)
@@ -44,16 +41,15 @@ namespace WebNhaHangAPI.Controllers
                 return BadRequest(new { message = "Tên bàn ăn không được để trống!" });
             }
 
-            // Tạo thực thể mới để lưu xuống DB
             var banMoi = new BanAn
             {
                 TenBan = model.TenBan.Trim(),
                 SoChoNgoi = model.SoChoNgoi > 0 ? model.SoChoNgoi : 4,
                 TrangThai = string.IsNullOrEmpty(model.TrangThai) ? "Trống" : model.TrangThai.Trim(),
                 KhuVucId = model.KhuVucId,
-                ViTriX = 20,         // Tọa độ mặc định ở kho bàn chờ bên trái
+                ViTriX = 20,    
                 ViTriY = 40,
-                IsChinhThuc = false   // Mặc định tạo mới sẽ nằm ở kho lưu trữ chờ kéo thả
+                IsChinhThuc = false   
             };
 
             _context.Set<BanAn>().Add(banMoi);
@@ -62,7 +58,6 @@ namespace WebNhaHangAPI.Controllers
             return Ok(new { message = "Thêm bàn ăn vào kho lưu trữ thành công!", data = banMoi });
         }
 
-        // 4. CẬP NHẬT THÔNG TIN BÀN ĂN (SỬA ĐỔI THAM SỐ THÀNH RequestBanAn)
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(int id, [FromBody] RequestBanAn model)
@@ -75,7 +70,6 @@ namespace WebNhaHangAPI.Controllers
                 return BadRequest(new { message = "Tên bàn ăn không được để trống!" });
             }
 
-            // Gán dữ liệu thay đổi
             banAn.TenBan = model.TenBan.Trim();
             banAn.SoChoNgoi = model.SoChoNgoi;
             banAn.TrangThai = string.IsNullOrEmpty(model.TrangThai) ? "Trống" : model.TrangThai.Trim();
@@ -89,7 +83,7 @@ namespace WebNhaHangAPI.Controllers
             return Ok(new { message = "Cập nhật thông tin bàn ăn thành công!" });
         }
 
-        // 5. XÓA BÀN ĂN
+
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
@@ -102,7 +96,6 @@ namespace WebNhaHangAPI.Controllers
             return Ok(new { message = "Đã xóa bàn ăn thành công!" });
         }
 
-        // 6. LỌC BÀN ĂN THEO TRẠNG THÁI
         [HttpGet("loc-trang-thai")]
         public async Task<IActionResult> GetByStatus([FromQuery] string trangThai)
         {
