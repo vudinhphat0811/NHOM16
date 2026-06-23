@@ -179,6 +179,66 @@ namespace WebNhaHangAPI.Controllers
             await _context.SaveChangesAsync();
             return Ok(new { message = "Thanh toán thành công! Bàn ăn đã được dọn sạch về trạng thái trống." });
         }
+        // ADMIN THÊM HOẶC TĂNG MÓN ĂN (Dùng cho C# Razor/MVC)
+        [HttpPost("admin-them-mon")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AdminAddFoodForm([FromForm] int datBanId, [FromForm] int monAnId, [FromForm] int soLuong, [FromForm] string returnUrl)
+        {
+            var don = await _context.Set<DatBan>().FirstOrDefaultAsync(x => x.Id == datBanId);
+            if (don == null) return NotFound();
+
+            var monAnDaCo = await _context.Set<ChiTietGoiMon>()
+                .FirstOrDefaultAsync(x => x.DatBanId == datBanId && x.MonAnId == monAnId);
+
+            if (monAnDaCo != null)
+            {
+                monAnDaCo.SoLuong += soLuong;
+                _context.Set<ChiTietGoiMon>().Update(monAnDaCo);
+            }
+            else
+            {
+                var bieuMau = new ChiTietGoiMon { DatBanId = datBanId, MonAnId = monAnId, SoLuong = soLuong };
+                _context.Set<ChiTietGoiMon>().Add(bieuMau);
+            }
+
+            await _context.SaveChangesAsync();
+            return Redirect(returnUrl); // Quay trở lại trang giao diện vừa đứng
+        }
+
+        // ADMIN ĐỔI SỐ LƯỢNG MÓN CỐ ĐỊNH (Dùng cho C# Razor/MVC)
+        [HttpPost("admin-sua-so-luong")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AdminUpdateQuantityForm([FromForm] int datBanId, [FromForm] int monAnId, [FromForm] int soLuongMoi, [FromForm] string returnUrl)
+        {
+            if (soLuongMoi <= 0) return RedirectToAction("AdminDeleteFoodForm", new { datBanId, monAnId, returnUrl });
+
+            var chiTiet = await _context.Set<ChiTietGoiMon>()
+                .FirstOrDefaultAsync(x => x.DatBanId == datBanId && x.MonAnId == monAnId);
+
+            if (chiTiet != null)
+            {
+                chiTiet.SoLuong = soLuongMoi;
+                _context.Set<ChiTietGoiMon>().Update(chiTiet);
+                await _context.SaveChangesAsync();
+            }
+            return Redirect(returnUrl);
+        }
+
+        // ADMIN XÓA MÓN KHỎI ĐƠN (Dùng cho C# Razor/MVC)
+        [HttpPost("admin-xoa-mon")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AdminDeleteFoodForm([FromForm] int datBanId, [FromForm] int monAnId, [FromForm] string returnUrl)
+        {
+            var chiTiet = await _context.Set<ChiTietGoiMon>()
+                .FirstOrDefaultAsync(x => x.DatBanId == datBanId && x.MonAnId == monAnId);
+
+            if (chiTiet != null)
+            {
+                _context.Set<ChiTietGoiMon>().Remove(chiTiet);
+                await _context.SaveChangesAsync();
+            }
+            return Redirect(returnUrl);
+        }
 
         // 8. ADMIN HOẶC KHÁCH HÀNG ÉP HỦY ĐƠN ĐẶT BÀN Ở BẤT KỲ TRẠNG THÁI NÀO ĐỂ GIẢI PHÓNG BÀN VỀ TRỐNG
         [HttpPut("{id}/khach-huy-ban")]

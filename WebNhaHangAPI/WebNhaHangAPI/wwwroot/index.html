@@ -108,17 +108,36 @@
                     const response = await fetch("/api/Admin/current-user-role", { headers: { "Authorization": `Bearer ${token}` } });
                     if (response.ok) {
                         const data = await response.json();
+
+                        // 1. TRƯỜNG HỢP ADMIN
                         if (data.roles && data.roles.includes("Admin")) {
-                            btnDatBanNgay.style.display = "none";
+                            btnDatBanNgay.style.display = "none"; // Admin ẩn nút đặt bàn công cộng
                             authArea.innerHTML = `
-                                    <div class="flex items-center space-x-3">
-                                        <span class="text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md font-bold text-xs border border-amber-200">
-                                            <i class="fa-solid fa-user-shield mr-1"></i> Admin
-                                        </span>
-                                        <a href="/admin/dashboard.html" class="text-gray-600 hover:text-[#a13d06] font-bold text-xs transition underline">Trang quản trị</a>
-                                        <span class="text-gray-300">|</span>
-                                        <button onclick="openLogoutModal()" class="text-red-600 hover:text-red-800 font-bold text-xs transition cursor-pointer">Logout</button>
-                                    </div>`;
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md font-bold text-xs border border-amber-200">
+                                        <i class="fa-solid fa-user-shield mr-1"></i> Admin
+                                    </span>
+                                    <a href="/admin/dashboard.html" class="text-gray-600 hover:text-[#a13d06] font-bold text-xs transition underline">Trang quản trị</a>
+                                    <span class="text-gray-300">|</span>
+                                    <button onclick="openLogoutModal()" class="text-red-600 hover:text-red-800 font-bold text-xs transition cursor-pointer">Logout</button>
+                                </div>`;
+                        }
+                        // 2. TRƯỜNG HỢP KHÁCH HÀNG THƯỜNG
+                        else {
+                            btnDatBanNgay.style.display = "block"; // Khách thường bắt buộc hiển thị nút
+                            btnDatBanNgay.onclick = () => { window.location.href = "/order.html"; };
+
+                            authArea.innerHTML = `
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md font-bold text-xs border border-blue-200">
+                                        <i class="fa-solid fa-user mr-1"></i> Khách hàng
+                                    </span>
+                                    <span class="text-gray-300">|</span>
+                                    <button onclick="openLogoutModal()" class="text-red-600 hover:text-red-800 font-bold text-xs transition cursor-pointer">Logout</button>
+                                    <span class="text-gray-300">|</span>
+                                </div>`;
+                            // Thả ngược lại nút Đặt Bàn Ngay vào bên trong AuthArea để nó không bị biến mất
+                            authArea.appendChild(btnDatBanNgay);
                         }
                     }
                 } catch (error) { console.error(error); }

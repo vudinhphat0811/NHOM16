@@ -1,0 +1,46 @@
+<div id="tab-order" class="content-tab space-y-5">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-xl font-bold text-gray-900 tracking-tight">Quản lý Đơn đặt bàn</h2>
+            <p class="text-xs text-gray-400 font-medium mt-0.5">Phê duyệt tiền cọc, giữ chỗ và theo dõi lịch hẹn thời gian thực.</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-gray-200 border-l-4 border-blue-500 shadow-2xs">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Tổng đơn hiển thị</p>
+            <h3 id="lblStatTotal" class="text-2xl font-black text-gray-900 mt-0.5">0</h3>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-gray-200 border-l-4 border-orange-500 shadow-2xs">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Đang chờ duyệt</p>
+            <h3 id="lblStatWaiting" class="text-2xl font-black text-gray-900 mt-0.5">0</h3>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-gray-200 border-l-4 border-emerald-500 shadow-2xs">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Đã xác nhận</p>
+            <h3 id="lblStatConfirmed" class="text-2xl font-black text-gray-900 mt-0.5">0</h3>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-gray-200 border-l-4 border-rose-500 shadow-2xs">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Đã hủy</p>
+            <h3 id="lblStatCanceled" class="text-2xl font-black text-gray-900 mt-0.5">0</h3>
+        </div>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-xs">
+        <table class="w-full text-left text-xs border-collapse">
+            <thead>
+                <tr class="bg-gray-50 border-b border-gray-100 text-gray-400 font-bold uppercase">
+                    <th class="p-4 w-20 text-center">Mã đơn</th>
+                    <th class="p-4">Khách hàng</th>
+                    <th class="p-4">Giờ hẹn đến</th>
+                    <th class="p-4">Vị trí bàn</th>
+                    <th class="p-4 text-center w-28">Số khách</th>
+                    <th class="p-4 text-center w-32">Trạng thái</th>
+                    <th class="p-4 w-48 text-center">Thao tác xử lý</th>
+                </tr>
+            </thead>
+            <tbody id="tbOrderDashboardBody" class="divide-y divide-gray-100 text-gray-600 font-semibold">
+                <tr><td colspan="7" class="p-8 text-center text-gray-400 italic">Đang tải danh sách đặt bàn...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>

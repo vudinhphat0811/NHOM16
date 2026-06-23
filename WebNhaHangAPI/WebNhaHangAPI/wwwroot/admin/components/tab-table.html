@@ -1,0 +1,41 @@
+<div id="tab-table" class="content-tab space-y-5">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-xl font-bold text-gray-900 tracking-tight">Sơ đồ điều phối Bàn ăn nhà hàng</h2>
+            <p class="text-xs text-gray-400 font-medium mt-0.5">Kéo bàn từ <b>Kho lưu trữ bàn chờ</b> thả vào <b>Sơ đồ mặt bằng chính thức</b> để kích hoạt hiển thị.</p>
+        </div>
+        <div class="flex space-x-2">
+            <button onclick="openLocationFormModal()" class="bg-gray-700 hover:bg-gray-800 text-white text-xs font-bold px-4 py-2.5 rounded-lg flex items-center space-x-2 transition shadow-sm cursor-pointer"><i class="fa-solid fa-folder-plus"></i> <span>+ Thêm khu vực</span></button>
+            <button onclick="openTableFormModal()" class="bg-[#cc4e11] hover:bg-[#b5430d] text-white text-xs font-bold px-4 py-2.5 rounded-lg flex items-center space-x-2 transition shadow-sm cursor-pointer"><i class="fa-solid fa-plus"></i> <span>+ Thêm bàn mới</span></button>
+        </div>
+    </div>
+
+    <div id="divAdminLocationTabs" class="flex space-x-6 text-xs font-bold border-b border-gray-200 pb-1"></div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-4 gap-4 items-start">
+        <div class="xl:col-span-3 grid grid-cols-4 gap-4 min-h-[580px]">
+            <div id="divTableStorage" ondragover="event.preventDefault();" ondrop="dropTableOnContainer(event, false)" class="col-span-1 bg-slate-200 border-2 border-dashed border-slate-400 rounded-2xl p-3 shadow-inner relative flex flex-col space-y-3 overflow-y-auto max-h-[580px]">
+                <div class="text-[10px] font-black uppercase text-slate-500 tracking-wider text-center border-b border-slate-300 pb-1.5 mb-2"><i class="fa-solid fa-box-archive"></i> Kho bàn chờ (Khách ẩn)</div>
+            </div>
+
+            <div id="divTableCanvas" ondragover="event.preventDefault();" ondrop="dropTableOnContainer(event, true)" class="col-span-3 bg-gray-50 border-2 border-dashed border-gray-300 rounded-2xl relative shadow-inner p-4 overflow-hidden min-h-[580px]">
+                <div class="absolute top-2 right-4 text-[10px] font-black uppercase text-gray-400 tracking-wider pointer-events-none"><i class="fa-solid fa-eye"></i> Sơ đồ chính thức (Khách thấy)</div>
+            </div>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-2xs space-y-3 shrink-0">
+            <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+                <h3 class="text-[11px] font-black uppercase text-gray-400 tracking-wider flex items-center space-x-1"><i class="fa-solid fa-layer-group text-orange-500"></i> <span>Danh sách khu vực</span></h3>
+                <span id="lblTotalLocationsCount" class="bg-orange-50 text-[#cc4e11] px-1.5 py-0.5 rounded-md text-[10px] font-black">0</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-[11px] font-bold text-gray-500">
+                    <thead>
+                        <tr class="text-gray-400 border-b border-gray-50 uppercase"><th class="pb-2 w-12 text-center">Mã</th><th class="pb-2">Tên vị trí</th><th class="pb-2 w-16 text-center">Sửa/Xóa</th></tr>
+                    </thead>
+                    <tbody id="tbMiniLocationBody" class="divide-y divide-gray-50 text-gray-600 font-semibold"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
