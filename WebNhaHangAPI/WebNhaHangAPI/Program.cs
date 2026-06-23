@@ -20,7 +20,7 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.ClaimsIdentity.RoleClaimType = System.Security.Claims.ClaimTypes.Role;
 });
 
-// 3. CẤU HÌNH CORS (Cho phép giao diện gọi API không bị chặn bảo mật)
+// 3. CẤU HÌNH CORS (Cho phép giao diện Frontend gọi API không bị chặn bảo mật)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -60,26 +60,37 @@ var app = builder.Build();
 
 app.UseHttpsRedirection();
 
-// 5. ĐIỀU HƯỚNG URL ĐỂ VÀO GIAO DIỆN KHÔNG BỊ TRÙNG ENDPOINT API GỐC
+// 5. ĐIỀU HƯỚNG URL ẨN ĐUÔI FILE TĨNH (.html) ĐỂ GIAO DIỆN ĐẸP VÀ CHUYÊN NGHIỆP
 app.Use(async (context, next) =>
 {
     var path = context.Request.Path.Value;
 
-    // Nếu vào trang gốc hoặc gõ /trang-chu, lôi file trang chủ index.html ra chạy ngầm
+    // Vào trang gốc hoặc /trang-chu -> Ép chạy ngầm index.html
     if (string.Equals(path, "/", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(path, "/trang-chu", StringComparison.OrdinalIgnoreCase))
     {
         context.Request.Path = "/index.html";
     }
-    // Nếu vào /dang-nhap, lôi file login.html ra chạy ngầm
+    // Vào /dang-nhap -> Ép chạy ngầm login.html
     else if (string.Equals(path, "/dang-nhap", StringComparison.OrdinalIgnoreCase))
     {
         context.Request.Path = "/login.html";
     }
-    // Nếu vào /dang-ky, lôi file register.html ra chạy ngầm
+    // Vào /dang-ky -> Ép chạy ngầm register.html
     else if (string.Equals(path, "/dang-ky", StringComparison.OrdinalIgnoreCase))
     {
         context.Request.Path = "/register.html";
+    }
+    // Vào /dat-ban -> Ép chạy ngầm order.html
+    else if (string.Equals(path, "/dat-ban", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Request.Path = "/order.html";
+    }
+    // KẾT NỐI VÀO TRANG ADMIN DASHBOARD (Chấp nhận cả gõ ẩn đuôi hoặc gõ trực tiếp .html)
+    else if (string.Equals(path, "/admin/dashboard", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(path, "/admin/dashboard.html", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Request.Path = "/admin/dashboard.html";
     }
 
     await next();
@@ -110,6 +121,7 @@ using (var scope = app.Services.CreateScope())
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
 
+    // Tự động kiểm tra và tạo 2 nhóm quyền cốt lõi
     string[] tenCacQuyen = { "Admin", "KhachHang" };
     foreach (var tenQuyen in tenCacQuyen)
     {
@@ -119,7 +131,7 @@ using (var scope = app.Services.CreateScope())
         }
     }
 
-    // Tự động kiểm tra và gán quyền Admin cho tài khoản quản trị mặc định khi có trong DB
+    // Tự động kiểm tra và gán quyền Admin cao nhất cho tài khoản admin@gmail.com khi có trong DB
     var adminUser = await userManager.FindByEmailAsync("admin@gmail.com");
     if (adminUser != null)
     {

@@ -1,0 +1,524 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdminPanel - Gourmet Portal</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .tab-btn.active {
+            color: white;
+            background-color: #cc4e11;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="text-gray-800 min-h-screen flex flex-col md:flex-row">
+
+    <div id="toast-container" class="fixed top-5 right-5 z-50 space-y-3 pointer-events-none"></div>
+
+    <div id="logoutModal" class="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 hidden opacity-0 transition-opacity duration-300 pointer-events-auto">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl transform scale-95 transition-transform duration-300">
+            <div class="text-center">
+                <div class="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4 text-[#a13d06]"><i class="fa-solid fa-arrow-right-from-bracket text-xl"></i></div>
+                <h3 class="text-lg font-extrabold text-gray-900 mb-2">Xác nhận đăng xuất</h3>
+                <p class="text-sm text-gray-500 font-medium mb-6">Bạn có chắc chắn muốn thoát khỏi hệ thống quản trị?</p>
+            </div>
+            <div class="flex space-x-3 text-sm font-bold">
+                <button onclick="closeLogoutModal()" class="w-1/2 border border-gray-200 text-gray-500 py-2.5 rounded-xl hover:bg-gray-50 transition">Hủy bỏ</button>
+                <button onclick="confirmLogout()" class="w-1/2 bg-rose-600 text-white py-2.5 rounded-xl hover:bg-rose-700 shadow-md transition">Đăng xuất</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="menuFormModal" class="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 hidden opacity-0 transition-opacity duration-300 pointer-events-auto">
+        <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl transform scale-95 transition-transform duration-300">
+            <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+                <h3 id="lblMenuModalTitle" class="text-xs font-bold text-gray-900 uppercase">Thêm món ăn mới</h3>
+                <button onclick="closeMenuFormModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form class="space-y-4 text-xs font-bold text-gray-500" onsubmit="event.preventDefault(); saveMenuData();">
+                <input type="hidden" id="txtDishId">
+                <div>
+                    <label class="block mb-1 uppercase">Tên món ăn <span class="text-red-500">*</span></label>
+                    <input type="text" id="txtDishName" required class="w-full border border-gray-200 rounded-lg px-3 py-2 text-gray-700 font-semibold bg-gray-50/50">
+                </div>
+                <div>
+                    <label class="block mb-1 uppercase">Danh mục</label>
+                    <select id="ddlDishCategory" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-gray-700 font-semibold bg-gray-50/50"></select>
+                </div>
+                <div>
+                    <label class="block mb-1 uppercase">Giá bán (VNĐ) <span class="text-red-500">*</span></label>
+                    <input type="number" id="txtDishPrice" required class="w-full border border-gray-200 rounded-lg px-3 py-2 text-gray-700 font-semibold bg-gray-50/50">
+                </div>
+                <div>
+                    <label class="block mb-1 uppercase">Hình ảnh món ăn</label>
+                    <input type="file" id="fileDishImage" accept="image/*" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-gray-700 font-semibold file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-orange-50 file:text-[#cc4e11] hover:file:bg-orange-100">
+                </div>
+                <div>
+                    <label class="block mb-1 uppercase">Trạng thái phục vụ</label>
+                    <select id="ddlDishStatus" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-gray-700 font-semibold bg-gray-50/50">
+                        <option value="Đang phục vụ">Đang phục vụ</option>
+                        <option value="Tạm hết">Tạm hết</option>
+                    </select>
+                </div>
+                <div class="flex space-x-3 pt-2">
+                    <button type="button" onclick="closeMenuFormModal()" class="w-1/2 border border-gray-200 text-gray-400 py-2.5 rounded-lg hover:bg-gray-50">Hủy</button>
+                    <button type="submit" class="w-1/2 bg-[#cc4e11] text-white py-2.5 rounded-lg hover:bg-[#b5430d] shadow-xs">Lưu lại</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="categoryFormModal" class="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 hidden opacity-0 transition-opacity duration-300 pointer-events-auto">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl transform scale-95 transition-transform duration-300">
+            <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+                <h3 id="lblCategoryModalTitle" class="text-xs font-bold text-gray-900 uppercase">Thêm danh mục mới</h3>
+                <button onclick="closeCategoryFormModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form class="space-y-4 text-xs font-bold text-gray-500" onsubmit="event.preventDefault(); saveCategoryData();">
+                <input type="hidden" id="txtCategoryId">
+                <div>
+                    <label class="block mb-1 uppercase">Tên danh mục <span class="text-red-500">*</span></label>
+                    <input type="text" id="txtCategoryName" required placeholder="Ví dụ: Món nướng, Món lẩu" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-gray-700 font-semibold bg-gray-50/50">
+                </div>
+                <div class="flex space-x-3 pt-2">
+                    <button type="button" onclick="closeCategoryFormModal()" class="w-1/2 border border-gray-200 text-gray-400 py-2.5 rounded-lg hover:bg-gray-50">Hủy</button>
+                    <button type="submit" class="w-1/2 bg-[#cc4e11] text-white py-2.5 rounded-lg hover:bg-[#b5430d] shadow-xs">Lưu dữ liệu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="locationFormModal" class="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 hidden opacity-0 transition-opacity duration-300 pointer-events-auto">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl transform scale-95 transition-transform duration-300">
+            <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+                <h3 id="lblLocationModalTitle" class="text-xs font-bold text-gray-900 uppercase">Thêm khu vực mới</h3>
+                <button onclick="closeLocationFormModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form class="space-y-4 text-xs font-bold text-gray-500" onsubmit="event.preventDefault(); saveLocationData();">
+                <input type="hidden" id="txtLocationId">
+                <div>
+                    <label class="block mb-1 uppercase">Tên vị trí / Khu vực <span class="text-red-500">*</span></label>
+                    <input type="text" id="txtLocationName" required placeholder="Ví dụ: Tầng trệt, Lầu 1, Phòng VIP" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-gray-700 font-semibold bg-gray-50/50">
+                </div>
+                <div class="flex space-x-3 pt-2">
+                    <button type="button" onclick="closeLocationFormModal()" class="w-1/2 border border-gray-200 text-gray-400 py-2.5 rounded-lg hover:bg-gray-50">Hủy</button>
+                    <button type="submit" class="w-1/2 bg-[#cc4e11] text-white py-2.5 rounded-lg hover:bg-[#b5430d] shadow-xs">Lưu khu vực</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="tableFormModal" class="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 hidden opacity-0 transition-opacity duration-300 pointer-events-auto">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl transform scale-95 transition-transform duration-300">
+            <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+                <h3 id="lblTableModalTitle" class="text-xs font-bold text-gray-900 uppercase">Thêm bàn ăn mới</h3>
+                <button onclick="closeTableFormModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form class="space-y-4 text-xs font-bold text-gray-500" onsubmit="event.preventDefault(); saveTableData();">
+                <input type="hidden" id="txtTableId">
+                <input type="hidden" id="txtTableIsChinhThuc" value="false">
+                <div>
+                    <label class="block mb-1 uppercase">Tên bàn / Số bàn <span class="text-red-500">*</span></label>
+                    <input type="text" id="txtTableName" required placeholder="Ví dụ: T1.01, V2.10" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-gray-700 font-semibold bg-gray-50/50">
+                </div>
+                <div>
+                    <label class="block mb-1 uppercase">Số chỗ ngồi</label>
+                    <input type="number" id="txtTableCapacity" required value="4" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-gray-700 font-semibold bg-gray-50/50">
+                </div>
+                <div>
+                    <label class="block mb-1 uppercase">Trạng thái bàn</label>
+                    <select id="ddlTableStatus" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-gray-700 font-semibold bg-gray-50/50">
+                        <option value="Trống">Trống</option>
+                        <option value="Có khách">Có khách</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block mb-1 uppercase">Thuộc khu vực tầng</label>
+                    <select id="ddlTableLocation" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-gray-700 font-semibold bg-gray-50/50"></select>
+                </div>
+                <div class="flex space-x-3 pt-2">
+                    <button type="button" onclick="closeTableFormModal()" class="w-1/2 border border-gray-200 text-gray-400 py-2.5 rounded-lg hover:bg-gray-50">Hủy</button>
+                    <button type="submit" class="w-1/2 bg-[#cc4e11] text-white py-2.5 rounded-lg hover:bg-[#b5430d] shadow-xs">Lưu bàn</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <aside class="w-full md:w-64 bg-[#2d3136] text-gray-400 flex flex-col justify-between shrink-0 border-r border-gray-700">
+        <div>
+            <div class="p-6 border-b border-gray-700/50">
+                <div class="text-white text-xl font-black tracking-tight flex items-center space-x-1 cursor-pointer" onclick="window.location.href='/'">
+                    <span>Admin</span><span class="text-orange-500">Panel</span>
+                </div>
+                <p class="text-[10px] text-gray-400 font-semibold tracking-wider mt-0.5 uppercase">Gourmet Portal</p>
+            </div>
+            <nav class="p-4 space-y-1 text-xs font-bold tracking-wide">
+                <button onclick="switchTab('order', this)" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left cursor-pointer"><i class="fa-regular fa-rectangle-list text-sm w-5"></i> <span>Order Management</span></button>
+                <button onclick="switchTab('table', this)" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left cursor-pointer"><i class="fa-solid fa-map text-sm w-5"></i> <span>Table Map</span></button>
+                <button onclick="switchTab('menu', this)" class="tab-btn active w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left cursor-pointer"><i class="fa-solid fa-utensils text-sm w-5"></i> <span>Menu Management</span></button>
+                <button onclick="switchTab('category', this)" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left cursor-pointer"><i class="fa-solid fa-folder-open text-sm w-5"></i> <span>Category Management</span></button>
+            </nav>
+        </div>
+        <div class="border-t border-gray-700/50 bg-[#25282d] p-4 space-y-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-10 bg-white text-gray-800 flex items-center justify-center rounded-full font-bold text-xs">AD</div>
+                <div><h4 class="text-white text-xs font-bold" id="lblAdminName">admin</h4><p class="text-[10px] text-gray-500 font-medium">Administrator</p></div>
+            </div>
+            <button onclick="openLogoutModal()" class="w-full flex items-center space-x-2 text-xs font-bold text-gray-400 hover:text-rose-400 transition pt-2 border-t border-gray-700/30 text-left cursor-pointer"><i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span></button>
+        </div>
+    </aside>
+
+    <main class="flex-grow flex flex-col min-h-screen overflow-x-hidden">
+        <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-xs sticky top-0 z-40">
+            <div id="lblHeaderContext" class="text-xs font-bold text-gray-800 uppercase tracking-wider">Menu Management</div>
+        </header>
+
+        <div class="p-6 flex-grow space-y-6">
+            <div id="tab-menu" class="content-tab space-y-5">
+                <div class="flex items-center justify-between">
+                    <div><h2 class="text-xl font-bold text-gray-900 tracking-tight">Quản lý Thực đơn</h2><p class="text-xs text-gray-400 font-medium mt-0.5">Quản lý món ăn, giá cả và hình ảnh.</p></div>
+                    <button onclick="openMenuFormModal()" class="bg-[#cc4e11] text-white text-xs font-bold px-4 py-2.5 rounded-lg flex items-center space-x-2 shadow-sm cursor-pointer"><i class="fa-solid fa-plus text-[10px]"></i> <span>Thêm món mới</span></button>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                    <div class="lg:col-span-3 bg-white p-4 rounded-xl border border-gray-200 flex items-center space-x-3 text-xs font-bold"><span class="text-gray-400 uppercase tracking-wider">Bộ lọc:</span><div id="divMenuFilters" class="flex flex-wrap gap-2"></div></div>
+                    <div class="bg-orange-50 border border-orange-100 p-4 rounded-xl flex items-center justify-between"><div><p class="text-[10px] font-bold text-orange-800 uppercase tracking-wider">Tổng món ăn</p><h3 id="lblTotalDishes" class="text-xl font-black text-orange-900 mt-0.5">0</h3></div><div class="text-orange-400 text-xl"><i class="fa-solid fa-utensils"></i></div></div>
+                </div>
+                <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-xs">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead><tr class="bg-gray-50 border-b border-gray-100 text-gray-400 font-bold uppercase"><th class="p-4 w-16 text-center">ID</th><th class="p-4">Hình ảnh & Tên món</th><th class="p-4 w-32">Danh mục</th><th class="p-4 w-32">Giá bán</th><th class="p-4 w-32">Trạng thái</th><th class="p-4 w-24 text-center">Thao tác</th></tr></thead>
+                        <tbody id="tbMenuBody" class="divide-y divide-gray-100 text-gray-600 font-semibold"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-category" class="content-tab hidden space-y-5">
+                <div class="flex items-center justify-between">
+                    <div><h2 class="text-xl font-bold text-gray-900 tracking-tight">Quản lý Danh mục Món ăn</h2></div>
+                    <button onclick="openCategoryFormModal()" class="bg-[#cc4e11] text-white text-xs font-bold px-4 py-2.5 rounded-lg cursor-pointer"><i class="fa-solid fa-plus text-[10px]"></i> Thêm danh mục</button>
+                </div>
+                <div class="bg-white border border-gray-200 rounded-xl max-w-2xl overflow-hidden shadow-xs">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead><tr class="bg-gray-50 border-b border-gray-100 text-gray-400 font-bold"><th class="p-4 w-20 text-center">ID</th><th class="p-4">Tên danh mục thực đơn</th><th class="p-4 w-32 text-center">Thao tác</th></tr></thead>
+                        <tbody id="tbCategoryBody" class="divide-y divide-gray-100 text-gray-600 font-semibold"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-table" class="content-tab hidden space-y-5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900 tracking-tight">Sơ đồ điều phối Bàn ăn nhà hàng</h2>
+                        <p class="text-xs text-gray-400 font-medium mt-0.5">Kéo bàn từ <b>Kho lưu trữ bàn chờ (Bên trái)</b> thả vào <b>Sơ đồ mặt bằng chính thức (Bên phải)</b> để kích hoạt hiển thị.</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="openLocationFormModal()" class="bg-gray-700 hover:bg-gray-800 text-white text-xs font-bold px-4 py-2.5 rounded-lg flex items-center space-x-2 transition shadow-sm cursor-pointer"><i class="fa-solid fa-folder-plus"></i> <span>+ Thêm khu vực</span></button>
+                        <button onclick="openTableFormModal()" class="bg-[#cc4e11] hover:bg-[#b5430d] text-white text-xs font-bold px-4 py-2.5 rounded-lg flex items-center space-x-2 transition shadow-sm cursor-pointer"><i class="fa-solid fa-plus"></i> <span>+ Thêm bàn mới</span></button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 xl:grid-cols-4 gap-4 items-start">
+
+                    <div class="xl:col-span-3 grid grid-cols-4 gap-4 min-h-[580px]">
+
+                        <div id="divTableStorage"
+                             ondragover="event.preventDefault();"
+                             ondrop="dropTableOnContainer(event, false)"
+                             class="col-span-1 bg-slate-200 border-2 border-dashed border-slate-400 rounded-2xl p-3 shadow-inner relative flex flex-col space-y-3 overflow-y-auto max-h-[580px]">
+                            <div class="text-[10px] font-black uppercase text-slate-500 tracking-wider text-center border-b border-slate-300 pb-1.5 mb-2"><i class="fa-solid fa-box-archive"></i> Kho bàn chờ (Khách ẩn)</div>
+                        </div>
+
+                        <div id="divTableCanvas"
+                             ondragover="event.preventDefault();"
+                             ondrop="dropTableOnContainer(event, true)"
+                             class="col-span-3 bg-gray-50 border-2 border-dashed border-gray-300 rounded-2xl relative shadow-inner p-4 overflow-hidden min-h-[580px]">
+                            <div class="absolute top-2 right-4 text-[10px] font-black uppercase text-gray-400 tracking-wider pointer-events-none"><i class="fa-solid fa-eye"></i> Sơ đồ chính thức (Khách thấy)</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-2xs space-y-3 shrink-0">
+                        <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+                            <h3 class="text-[11px] font-black uppercase text-gray-400 tracking-wider flex items-center space-x-1"><i class="fa-solid fa-layer-group text-orange-500"></i> <span>Danh sách khu vực</span></h3>
+                            <span id="lblTotalLocationsCount" class="bg-orange-50 text-[#cc4e11] px-1.5 py-0.5 rounded-md text-[10px] font-black">0</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-[11px] font-bold text-gray-500">
+                                <thead>
+                                    <tr class="text-gray-400 border-b border-gray-50 uppercase"><th class="pb-2 w-12 text-center">Mã</th><th class="pb-2">Tên vị trí</th><th class="pb-2 w-16 text-center">Sửa/Xóa</th></tr>
+                                </thead>
+                                <tbody id="tbMiniLocationBody" class="divide-y divide-gray-50 text-gray-600 font-semibold"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-order" class="content-tab hidden p-12 text-center bg-white border border-gray-200 rounded-xl text-gray-400 font-bold shadow-xs">Hóa đơn đang đặt...</div>
+        </div>
+    </main>
+
+    <script>
+        const token = localStorage.getItem("token");
+        let globalCategories = []; let globalDishes = []; let globalTables = []; let globalLocations = [];
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById("toast-container");
+            const bgColor = type === 'success' ? 'bg-emerald-500' : 'bg-rose-500';
+            const icon = type === 'success' ? '<i class="fa-solid fa-circle-check text-lg"></i>' : '<i class="fa-solid fa-circle-xmark text-lg"></i>';
+            const toast = document.createElement("div");
+            toast.className = `flex items-center space-x-3 ${bgColor} text-white text-xs font-bold px-5 py-3.5 rounded-xl shadow-lg transform translate-x-full opacity-0 transition-all duration-300 pointer-events-auto min-w-[280px]`;
+            toast.innerHTML = `<span>${icon}</span><span class="flex-1">${message}</span>`; container.appendChild(toast);
+            setTimeout(() => { toast.classList.remove("translate-x-full", "opacity-0"); }, 10);
+            setTimeout(() => { toast.classList.add("translate-x-full", "opacity-0"); setTimeout(() => { toast.remove(); }, 300); }, 3000);
+        }
+
+        document.addEventListener("DOMContentLoaded", async function () {
+            if (!token) { window.location.href = "/dang-nhap"; return; }
+            try {
+                const response = await fetch("/api/Admin/current-user-role", { method: "GET", headers: { "Authorization": `Bearer ${token}` } });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (!data.roles || !data.roles.includes("Admin")) { window.location.href = "/"; return; }
+                    document.getElementById("lblAdminName").innerText = data.email.split('@')[0];
+                    await loadAllCategories(); await loadAllLocations(); await loadAllDishes(); await loadAllTables();
+                } else { window.location.href = "/dang-nhap"; }
+            } catch (error) { console.error(error); }
+        });
+
+        // ================= QUẢN LÝ KHU VỰC VỊ TRÍ =================
+        async function loadAllLocations() {
+            try {
+                const res = await fetch("/api/Admin/get-all-locations");
+                if (res.ok) {
+                    globalLocations = await res.json();
+                    document.getElementById("lblTotalLocationsCount").innerText = globalLocations.length;
+                    const miniTbody = document.getElementById("tbMiniLocationBody"); miniTbody.innerHTML = "";
+                    const ddlLocation = document.getElementById("ddlTableLocation"); ddlLocation.innerHTML = "";
+
+                    globalLocations.forEach(loc => {
+                        const tr = document.createElement("tr"); tr.className = "hover:bg-gray-50 transition";
+                        tr.innerHTML = `<td class="py-2 text-center text-gray-400 font-bold">#${loc.id}</td><td class="py-2 text-gray-909 font-bold text-xs truncate max-w-[110px]" title="${loc.tenKhuVuc}">${loc.tenKhuVuc}</td><td class="py-2 text-center space-x-1 flex justify-center items-center"><button onclick='editLocationClick(${JSON.stringify(loc)})' class="text-gray-400 hover:text-blue-600 p-1 cursor-pointer"><i class="fa-regular fa-pen-to-square text-[10px]"></i></button><button onclick="deleteLocation(${loc.id})" class="text-gray-400 hover:text-red-600 p-1 cursor-pointer"><i class="fa-regular fa-trash-can text-[10px]"></i></button></td>`;
+                        miniTbody.appendChild(tr);
+                        const opt = document.createElement("option"); opt.value = loc.id; opt.innerText = loc.tenKhuVuc; ddlLocation.appendChild(opt);
+                    });
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        function openLocationFormModal() {
+            document.getElementById("lblLocationModalTitle").innerText = "Thêm khu vực mới";
+            document.getElementById("txtLocationId").value = ""; document.getElementById("txtLocationName").value = "";
+            const modal = document.getElementById("locationFormModal"); modal.classList.remove("hidden");
+            setTimeout(() => { modal.classList.remove("opacity-0"); }, 15);
+        }
+        function closeLocationFormModal() { const modal = document.getElementById("locationFormModal"); modal.classList.add("opacity-0"); setTimeout(() => modal.classList.add("hidden"), 300); }
+        async function saveLocationData() {
+            const id = document.getElementById("txtLocationId").value; const bodyData = { tenKhuVuc: document.getElementById("txtLocationName").value.trim() };
+            let url = id ? `/api/Admin/update-location/${id}` : "/api/Admin/add-location"; let method = id ? "PUT" : "POST";
+            try {
+                const res = await fetch(url, { method: method, headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, body: JSON.stringify(bodyData) });
+                if (res.ok) { showToast("Cập nhật khu vực thành công", "success"); closeLocationFormModal(); await loadAllLocations(); if (globalTables.length > 0) loadAllTables(); }
+            } catch (err) { }
+        }
+        async function deleteLocation(id) { if (!confirm("Xóa vị trí này?")) return; try { const res = await fetch(`/api/Admin/delete-location/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${token}` } }); if (res.ok) { showToast("Xóa thành công", "success"); await loadAllLocations(); await loadAllTables(); } } catch (err) { } }
+
+        // ================= SƠ ĐỒ BÀN ĂN (PHÂN CHIA HAI KHU VỰC) =================
+        async function loadAllTables() {
+            try {
+                const res = await fetch("/api/Admin/get-all-tables");
+                if (res.ok) {
+                    globalTables = await res.json();
+
+                    const canvas = document.getElementById("divTableCanvas");
+                    const storage = document.getElementById("divTableStorage");
+
+                    // Clear cũ, giữ lại tiêu đề khay chứa
+                    canvas.querySelectorAll('.table-item-card').forEach(el => el.remove());
+                    storage.querySelectorAll('.table-item-card').forEach(el => el.remove());
+
+                    globalTables.forEach(ban => {
+                        const idBan = ban.id || ban.Id; const tenBan = ban.tenBan || ban.TenBan; const trangThai = ban.trangThai || ban.TrangThai || "Trống"; const choNgoi = ban.soChoNgoi || ban.SoChoNgoi || 4;
+                        const isChinhThuc = ban.isChinhThuc || ban.IsChinhThuc || false;
+                        const currentKhuVucId = ban.khuVucId || ban.KhuVucId;
+                        const matchedLoc = globalLocations.find(l => l.id === currentKhuVucId);
+                        const tenKhuVuc = matchedLoc ? matchedLoc.tenKhuVuc : "Chưa rõ tầng";
+
+                        const isAvailable = trangThai === "Trống";
+                        const cardBg = isAvailable ? "bg-white border-gray-200" : "bg-orange-50/70 border-orange-200";
+                        const iconColor = isAvailable ? "text-gray-300" : "text-orange-500";
+                        const statusBadge = isAvailable ? `<span class="bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded text-[9px] font-extrabold">Trống</span>` : `<span class="bg-orange-500 text-white px-1.5 py-0.5 rounded text-[9px] font-extrabold">Có khách</span>`;
+
+                        const card = document.createElement("div");
+                        card.className = `${cardBg} border rounded-xl p-3 shadow-2xs flex flex-col justify-between group cursor-move select-none hover:shadow-sm table-item-card transition-all`;
+                        card.setAttribute("draggable", "true");
+                        card.id = `table-card-${idBan}`;
+
+                        // ĐỊNH VỊ CHO TỪNG KHU VỰC ĐỘC LẬP
+                        if (isChinhThuc) {
+                            // Nếu nằm ở khu chính thức, gán style absolute tự do
+                            card.style.position = "absolute";
+                            card.style.left = `${ban.viTriX || ban.ViTriX || 20}px`;
+                            card.style.top = `${ban.viTriY || ban.ViTriY || 40}px`;
+                            card.style.width = "135px";
+                            card.style.height = "115px";
+                            card.style.zIndex = "10";
+                        } else {
+                            // Nếu nằm ở kho lưu trữ, để hiển thị dạng danh bạ tự động dồn khối
+                            card.style.position = "relative";
+                            card.style.width = "100%";
+                            card.style.height = "100px";
+                        }
+
+                        card.ondragstart = (e) => {
+                            e.dataTransfer.setData("text/plain", idBan);
+                            if (isChinhThuc) {
+                                const rect = card.getBoundingClientRect();
+                                e.dataTransfer.setData("offsetX", e.clientX - rect.left);
+                                e.dataTransfer.setData("offsetY", e.clientY - rect.top);
+                            } else {
+                                e.dataTransfer.setData("offsetX", 60);
+                                e.dataTransfer.setData("offsetY", 50);
+                            }
+                        };
+
+                        card.innerHTML = `
+                                <div class="flex items-start justify-between">
+                                    <div class="w-6 h-6 rounded bg-gray-50 flex items-center justify-center ${iconColor} text-xs"><i class="fa-solid fa-chair"></i></div>
+                                    ${statusBadge}
+                                </div>
+                                <div class="mt-1">
+                                    <h4 class="text-gray-900 font-black text-xs truncate">${tenBan}</h4>
+                                    <p class="text-[9px] text-gray-400 font-bold truncate">${tenKhuVuc} (${choNgoi} chỗ)</p>
+                                </div>
+                                <div class="absolute bottom-2 right-2 space-x-1 opacity-0 group-hover:opacity-100 transition duration-150">
+                                    <button onclick='editTableClick(${JSON.stringify(ban)})' class="bg-blue-50 text-blue-600 p-1 rounded text-[10px] cursor-pointer"><i class="fa-regular fa-pen-to-square"></i></button>
+                                    <button onclick="deleteTable(${idBan})" class="bg-rose-50 text-rose-600 p-1 rounded text-[10px] cursor-pointer"><i class="fa-regular fa-trash-can"></i></button>
+                                </div>
+                            `;
+
+                        // Đẩy thẻ vào đúng khay chứa HTML
+                        if (isChinhThuc) canvas.appendChild(card);
+                        else storage.appendChild(card);
+                    });
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        // HÀM TIẾP NHẬN SỰ KIỆN KHI ADMIN THẢ CHUỘT VÀO VÙNG KHAY CHỨA BẤT KỲ
+        async function dropTableOnContainer(e, targetIsChinhThuc) {
+            e.preventDefault();
+            const idBan = e.dataTransfer.getData("text/plain");
+            const offsetX = parseFloat(e.dataTransfer.getData("offsetX")) || 0;
+            const offsetY = parseFloat(e.dataTransfer.getData("offsetY")) || 0;
+
+            let newX = 20; let newY = 40;
+
+            if (targetIsChinhThuc) {
+                // Nếu thả vào khu chính thức, tính toán tọa độ chuột pixel
+                const canvas = document.getElementById("divTableCanvas");
+                const canvasRect = canvas.getBoundingClientRect();
+                newX = e.clientX - canvasRect.left - offsetX;
+                newY = e.clientY - canvasRect.top - offsetY;
+
+                if (newX < 0) newX = 0; if (newY < 0) newY = 0;
+                if (newX > canvasRect.width - 135) newX = canvasRect.width - 135;
+                if (newY > canvasRect.height - 115) newY = canvasRect.height - 115;
+            }
+
+            try {
+                // Gửi dữ liệu đồng bộ trạng thái IsChinhThuc lên SQL Server
+                const res = await fetch(`/api/Admin/update-table-coords/${idBan}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                    body: JSON.stringify({ viTriX: Math.round(newX), viTriY: Math.round(newY), isChinhThuc: targetIsChinhThuc })
+                });
+                if (res.ok) { showToast("Cấu trúc bàn ăn đã được cập nhật!", "success"); await loadAllTables(); }
+            } catch (err) { showToast("Lỗi kết nối!", "error"); }
+        }
+
+        function openTableFormModal() {
+            document.getElementById("lblTableModalTitle").innerText = "Thêm bàn ăn mới";
+            document.getElementById("txtTableId").value = ""; document.getElementById("txtTableName").value = ""; document.getElementById("txtTableCapacity").value = "4"; document.getElementById("ddlTableStatus").value = "Trống"; document.getElementById("txtTableIsChinhThuc").value = "false";
+            if (globalLocations.length > 0) document.getElementById("ddlTableLocation").value = globalLocations[0].id;
+            const modal = document.getElementById("tableFormModal"); modal.classList.remove("hidden");
+            setTimeout(() => { modal.classList.remove("opacity-0"); }, 15);
+        }
+        function closeTableFormModal() { const modal = document.getElementById("tableFormModal"); modal.classList.add("opacity-0"); setTimeout(() => modal.classList.add("hidden"), 300); }
+
+        function editTableClick(ban) {
+            openTableFormModal(); document.getElementById("lblTableModalTitle").innerText = "Cập nhật thông tin bàn";
+            document.getElementById("txtTableId").value = ban.id || ban.Id; document.getElementById("txtTableName").value = ban.tenBan || ban.TenBan; document.getElementById("txtTableCapacity").value = ban.soChoNgoi || ban.SoChoNgoi || 4; document.getElementById("ddlTableStatus").value = ban.trangThai || ban.TrangThai || "Trống";
+            document.getElementById("ddlTableLocation").value = ban.khuVucId || ban.KhuVucId;
+            document.getElementById("txtTableIsChinhThuc").value = ban.isChinhThuc || ban.IsChinhThuc || "false";
+        }
+
+        async function saveTableData() {
+            const id = document.getElementById("txtTableId").value;
+            const bodyData = {
+                tenBan: document.getElementById("txtTableName").value.trim(),
+                soChoNgoi: parseInt(document.getElementById("txtTableCapacity").value) || 4,
+                trangThai: document.getElementById("ddlTableStatus").value,
+                khuVucId: parseInt(document.getElementById("ddlTableLocation").value),
+                isChinhThuc: document.getElementById("txtTableIsChinhThuc").value === "true"
+            };
+            let url = id ? `/api/Admin/update-table/${id}` : "/api/Admin/add-table"; let method = id ? "PUT" : "POST";
+            try {
+                const res = await fetch(url, { method: method, headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, body: JSON.stringify(bodyData) });
+                if (res.ok) { showToast("Lưu thông tin bàn thành công!", "success"); closeTableFormModal(); await loadAllTables(); }
+            } catch (err) { }
+        }
+
+        async function deleteTable(id) { if (!confirm("Xóa bàn ăn này?")) return; try { const res = await fetch(`/api/Admin/delete-table/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${token}` } }); if (res.ok) { showToast("Xóa bàn thành công", "success"); await loadAllTables(); } } catch (err) { } }
+
+        // ================= THAO TÁC DANH MỤC & MÓN ĂN =================
+        async function loadAllCategories() {
+            try {
+                const res = await fetch("/api/Admin/get-all-categories");
+                if (res.ok) {
+                    globalCategories = await res.json();
+                    const tbody = document.getElementById("tbCategoryBody"); tbody.innerHTML = "";
+                    const ddlCategory = document.getElementById("ddlDishCategory"); ddlCategory.innerHTML = "";
+                    const filterContainer = document.getElementById("divMenuFilters"); filterContainer.innerHTML = `<button onclick="filterByGlobalCategory('Tất cả')" class="bg-[#cc4e11] text-white px-3 py-1.5 rounded-lg cursor-pointer">Tất cả</button>`;
+                    globalCategories.forEach(cat => {
+                        const tr = document.createElement("tr"); tr.className = "hover:bg-gray-50 transition border-b border-gray-100";
+                        tr.innerHTML = `<td class="p-4 text-center text-gray-400 font-bold">#${cat.id}</td><td class="p-4 text-gray-900 font-bold text-sm">${cat.tenDanhMuc}</td><td class="p-4 text-center space-x-2"><button onclick='editCategoryClick(${JSON.stringify(cat)})' class="text-gray-400 hover:text-blue-600 p-1 rounded cursor-pointer"><i class="fa-regular fa-pen-to-square"></i></button><button onclick="deleteCategory(${cat.id})" class="text-gray-400 hover:text-red-600 p-1 rounded cursor-pointer"><i class="fa-regular fa-trash-can"></i></button></td>`;
+                        tbody.appendChild(tr);
+                        const opt = document.createElement("option"); opt.value = cat.id; opt.innerText = cat.tenDanhMuc; ddlCategory.appendChild(opt);
+                        const btnFilter = document.createElement("button"); btnFilter.className = "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded-lg cursor-pointer transition"; btnFilter.innerText = cat.tenDanhMuc; btnFilter.onclick = () => filterByGlobalCategory(cat.id); filterContainer.appendChild(btnFilter);
+                    });
+                }
+            } catch (err) { console.error(err); }
+        }
+        function openCategoryFormModal() { document.getElementById("lblCategoryModalTitle").innerText = "Thêm danh mục mới"; document.getElementById("txtCategoryId").value = ""; document.getElementById("txtCategoryName").value = ""; const modal = document.getElementById("categoryFormModal"); modal.classList.remove("hidden"); setTimeout(() => { modal.classList.remove("opacity-0"); }, 15); }
+        function closeCategoryFormModal() { const modal = document.getElementById("categoryFormModal"); modal.classList.add("opacity-0"); setTimeout(() => modal.classList.add("hidden"), 300); }
+        function editCategoryClick(cat) { openCategoryFormModal(); document.getElementById("lblCategoryModalTitle").innerText = "Cập nhật danh mục"; document.getElementById("txtCategoryId").value = cat.id; document.getElementById("txtCategoryName").value = cat.tenDanhMuc; }
+        async function saveCategoryData() { const id = document.getElementById("txtCategoryId").value; const bodyData = { tenDanhMuc: document.getElementById("txtCategoryName").value.trim() }; let url = id ? `/api/Admin/update-category/${id}` : "/api/Admin/add-category"; let method = id ? "PUT" : "POST"; try { const res = await fetch(url, { method: method, headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, body: JSON.stringify(bodyData) }); if (res.ok) { showToast("Lưu danh mục thành công", "success"); closeCategoryFormModal(); await loadAllCategories(); if (globalDishes.length > 0) renderDishesTable(globalDishes); } } catch (err) { } }
+        async function deleteCategory(id) { if (!confirm("Xóa danh mục?")) return; try { const res = await fetch(`/api/Admin/delete-category/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${token}` } }); if (res.ok) { showToast("Xóa thành công", "success"); await loadAllCategories(); await loadAllDishes(); } } catch (err) { } }
+
+        async function loadAllDishes() { try { const res = await fetch("/api/Admin/get-all-dishes"); if (res.ok) { globalDishes = await res.json(); document.getElementById("lblTotalDishes").innerText = globalDishes.length; renderDishesTable(globalDishes); } } catch (err) { } }
+        function renderDishesTable(dishes) { const tbody = document.getElementById("tbMenuBody"); tbody.innerHTML = ""; if (dishes.length === 0) { tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-400">Thực đơn hiện tại đang trống!</td></tr>`; return; } dishes.forEach(mon => { const idMonAn = mon.id || mon.Id; const tenMon = mon.tenMon || mon.TenMon; const giaMon = mon.gia || mon.Gia; const linkAnh = mon.hinhAnh || mon.HinhAnh || "https://images.unsplash.com/photo-1546964124-0cce460f38ef"; const trangThaiMon = mon.trangThai || mon.TrangThai || "Đang phục vụ"; const currentCatId = mon.danhMucId || mon.DanhMucId; const matchedCat = globalCategories.find(c => c.id === currentCatId); const textDanhMuc = matchedCat ? matchedCat.tenDanhMuc : "Món chính"; const statusBadge = trangThaiMon === "Đang phục vụ" ? `<span class="bg-emerald-50 text-emerald-600 border border-emerald-200 px-2 py-0.5 rounded-full font-bold text-[10px] inline-flex items-center"><span class="w-1 h-1 rounded-full bg-emerald-500 mr-1"></span> Đang phục vụ</span>` : `<span class="bg-gray-100 text-gray-400 border border-gray-200 px-2 py-0.5 rounded-full font-bold text-[10px] inline-flex items-center"><span class="w-1 h-1 rounded-full bg-gray-400 mr-1"></span> Tạm hết</span>`; const tr = document.createElement("tr"); tr.className = "hover:bg-gray-50 transition border-b border-gray-100"; tr.innerHTML = `<td class="p-4 text-center text-gray-400">#${idMonAn}</td><td class="p-4 flex items-center space-x-3"><img src="${linkAnh}" class="w-10 h-10 object-cover rounded-lg border shadow-xs" onerror="this.src='https://images.unsplash.com/photo-1546964124-0cce460f38ef'"><span class="font-bold text-gray-900 text-xs">${tenMon}</span></td><td class="p-4 uppercase text-[10px] font-bold text-orange-600">${textDanhMuc}</td><td class="p-4 font-black text-orange-800 text-xs">${Number(giaMon).toLocaleString('vi-VN')} đ</td><td class="p-4">${statusBadge}</td><td class="p-4 text-center space-x-1.5"><button onclick='editDishClick(${JSON.stringify(mon)})' class="text-gray-400 hover:text-blue-600 p-1 rounded cursor-pointer"><i class="fa-regular fa-pen-to-square"></i></button><button onclick="deleteDish(${idMonAn})" class="text-gray-400 hover:text-red-600 p-1 rounded cursor-pointer"><i class="fa-regular fa-trash-can"></i></button></td>`; tbody.appendChild(tr); }); }
+        function filterByGlobalCategory(catId) { if (catId === 'Tất cả') renderDishesTable(globalDishes); else renderDishesTable(globalDishes.filter(m => (m.danhMucId || m.DanhMucId) === catId)); }
+        function openMenuFormModal() { document.getElementById("lblMenuModalTitle").innerText = "Thêm món ăn mới"; document.getElementById("txtDishId").value = ""; document.getElementById("txtDishName").value = ""; document.getElementById("txtDishPrice").value = ""; document.getElementById("fileDishImage").value = ""; if (globalCategories.length > 0) document.getElementById("ddlDishCategory").value = globalCategories[0].id; const modal = document.getElementById("menuFormModal"); modal.classList.remove("hidden"); setTimeout(() => { modal.classList.remove("opacity-0"); }, 15); }
+        function closeMenuFormModal() { const modal = document.getElementById("menuFormModal"); modal.classList.add("opacity-0"); setTimeout(() => modal.classList.add("hidden"), 300); }
+        function editDishClick(monAn) { openMenuFormModal(); document.getElementById("lblMenuModalTitle").innerText = "Cập nhật thông tin món ăn"; document.getElementById("txtDishId").value = monAn.id || monAn.Id; document.getElementById("txtDishName").value = monAn.tenMon || monAn.TenMon || ""; document.getElementById("txtDishPrice").value = monAn.gia || monAn.Gia || 0; document.getElementById("ddlDishStatus").value = monAn.trangThai || monAn.TrangThai || "Đang phục vụ"; document.getElementById("ddlDishCategory").value = monAn.danhMucId || monAn.DanhMucId; }
+        async function saveMenuData() { const id = document.getElementById("txtDishId").value; const fileInput = document.getElementById("fileDishImage"); const formData = new FormData(); formData.append("tenMonAn", document.getElementById("txtDishName").value.trim()); formData.append("danhMucId", parseInt(document.getElementById("ddlDishCategory").value)); formData.append("giaBan", parseFloat(document.getElementById("txtDishPrice").value)); formData.append("trangThai", document.getElementById("ddlDishStatus").value); if (fileInput.files.length > 0) formData.append("hinhAnhFile", fileInput.files[0]); let url = id ? `/api/Admin/update-dish/${id}` : "/api/Admin/add-dish"; let method = id ? "PUT" : "POST"; try { const res = await fetch(url, { method: method, headers: { "Authorization": `Bearer ${token}` }, body: formData }); if (res.ok) { showToast("Lưu món ăn thành công", "success"); closeMenuFormModal(); await loadAllDishes(); } } catch (err) { } }
+        async function deleteDish(id) { if (!id || !confirm("Xóa vĩnh viễn món ăn này?")) return; try { const res = await fetch(`/api/Admin/delete-dish/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${token}` } }); if (res.ok) { showToast("Xóa thành công", "success"); loadAllDishes(); } } catch (err) { } }
+
+        function switchTab(tabId, element) {
+            document.querySelectorAll('.content-tab').forEach(t => t.classList.add('hidden')); document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden'); if (element) element.classList.add('active');
+            document.getElementById("lblHeaderContext").innerText = tabId.toUpperCase() + " MANAGEMENT";
+        }
+        function openLogoutModal() { document.getElementById("logoutModal").classList.remove("hidden"); setTimeout(() => { document.getElementById("logoutModal").classList.remove("opacity-0"); }, 10); }
+        function closeLogoutModal() { document.getElementById("logoutModal").classList.add("opacity-0"); setTimeout(() => document.getElementById("logoutModal").classList.add("hidden"), 300); }
+        function confirmLogout() { localStorage.removeItem("token"); window.location.href = "/"; }
+    </script>
+</body>
+</html>
