@@ -1,0 +1,45 @@
+<div id="tab-menu" class="content-tab space-y-5">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-xl font-bold text-gray-900 tracking-tight">Quản lý Thực đơn Món ăn</h2>
+            <p class="text-xs text-gray-400 font-medium mt-0.5">Quản lý các món ăn, giá cả, trạng thái và hình ảnh hiển thị trên thực đơn.</p>
+        </div>
+        <button onclick="openMenuFormModal()" class="bg-[#cc4e11] text-white text-xs font-bold px-4 py-2.5 rounded-lg flex items-center space-x-2 shadow-sm cursor-pointer hover:bg-[#b5430d] transition">
+            <i class="fa-solid fa-plus text-[10px]"></i> <span>Thêm món mới</span>
+        </button>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div class="lg:col-span-3 bg-white p-4 rounded-xl border border-gray-200 flex items-center space-x-3 text-xs font-bold">
+            <span class="text-gray-400 uppercase tracking-wider">Bộ lọc:</span>
+            <div id="divMenuFilters" class="flex flex-wrap gap-2"></div>
+        </div>
+        <div class="bg-orange-50 border border-orange-100 p-4 rounded-xl flex items-center justify-between">
+            <div>
+                <p class="text-[10px] font-bold text-orange-800 uppercase tracking-wider">Tổng món ăn</p>
+                <h3 id="lblTotalDishes" class="text-xl font-black text-orange-900 mt-0.5">0</h3>
+            </div>
+            <div class="text-orange-400 text-xl"><i class="fa-solid fa-utensils"></i></div>
+        </div>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-xs">
+        <table class="w-full text-left text-xs border-collapse">
+            <thead>
+                <tr class="bg-gray-50 border-b border-gray-100 text-gray-400 font-bold uppercase">
+                    <th class="p-4 w-16 text-center">ID</th>
+                    <th class="p-4">Hình ảnh & Tên món</th>
+                    <th class="p-4 w-32">Danh mục</th>
+                    <th class="p-4 w-32">Giá bán</th>
+                    <th class="p-4 w-32">Trạng thái</th>
+                    <th class="p-4 w-24 text-center">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="tbMenuBody" class="divide-y divide-gray-100 text-gray-600 font-semibold">
+                <tr>
+                    <td colspan="6" class="p-8 text-center text-gray-400 italic">Đang tải danh sách món ăn...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

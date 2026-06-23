@@ -16,7 +16,7 @@ namespace WebNhaHangAPI.Controllers
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly DbContextNhaHang _context; // Đảm bảo sử dụng chính xác DbContextNhaHang
+        private readonly DbContextNhaHang _context; 
 
         public AdminController(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager, DbContextNhaHang context)
         {
@@ -24,10 +24,6 @@ namespace WebNhaHangAPI.Controllers
             _roleManager = roleManager;
             _context = context;
         }
-
-        // =========================================================================
-        // ================= 1. API PHÂN QUYỀN VÀ XÁC THỰC TÀI KHOẢN =================
-        // =========================================================================
 
         [HttpPost("set-role")]
         [Authorize(Roles = "Admin")]
@@ -105,9 +101,6 @@ namespace WebNhaHangAPI.Controllers
             return Ok(new { message = "Đã xóa danh mục khỏi hệ thống thành công!" });
         }
 
-        // =========================================================================
-        // ================= 3. API QUẢN LÝ THỰC ĐƠN MÓN ĂN (danhsachmonan) =========
-        // =========================================================================
 
         [HttpGet("get-all-dishes")]
         public async Task<IActionResult> GetAllDishes()
@@ -201,10 +194,6 @@ namespace WebNhaHangAPI.Controllers
             return Ok(new { message = "Đã xóa món ăn khỏi thực đơn thành công!" });
         }
 
-        // =========================================================================
-        // ================= 4. API QUẢN LÝ KHU VỰC (danhsachkhuvuc) ===============
-        // =========================================================================
-
         [HttpGet("get-all-locations")]
         public async Task<IActionResult> GetAllLocations()
         {
@@ -253,14 +242,10 @@ namespace WebNhaHangAPI.Controllers
             return Ok(new { message = "Đã xóa khu vực khỏi hệ thống thành công!" });
         }
 
-        // =========================================================================
-        // ================= 5. API QUẢN LÝ BÀN ĂN (danhsachbanan) =================
-        // =========================================================================
-
         [HttpGet("get-all-tables")]
         public async Task<IActionResult> GetAllTables()
         {
-            // Tự động map xuống bảng danhsachbanan nhờ cấu trúc [Table] trong model
+
             var dsBan = await _context.Set<BanAn>().ToListAsync();
             return Ok(dsBan);
         }
@@ -282,9 +267,9 @@ namespace WebNhaHangAPI.Controllers
                 SoChoNgoi = model.SoChoNgoi > 0 ? model.SoChoNgoi : 4,
                 TrangThai = string.IsNullOrEmpty(model.TrangThai) ? "Trống" : model.TrangThai.Trim(),
                 KhuVucId = model.KhuVucId,
-                ViTriX = 20,          // Mặc định tạo ở kho chờ góc trái
+                ViTriX = 20,       
                 ViTriY = 40,
-                IsChinhThuc = false   // Mặc định nằm ở kho lưu trữ chưa đưa ra sơ đồ chính thức
+                IsChinhThuc = false   
             };
 
             _context.Set<BanAn>().Add(banMoi);
@@ -330,7 +315,6 @@ namespace WebNhaHangAPI.Controllers
             return Ok(new { message = "Đã xóa bàn ăn khỏi sơ đồ thành công!" });
         }
 
-        // ĐẶC QUYỀN ADMIN: Cập nhật nhanh tọa độ và trạng thái vùng phân hoạch khi thả chuột
         [HttpPut("update-table-coords/{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateTableCoordinates(int id, [FromBody] RequestUpdateCoordinates model)
@@ -338,9 +322,9 @@ namespace WebNhaHangAPI.Controllers
             var banDb = await _context.Set<BanAn>().FindAsync(id);
             if (banDb == null) return NotFound(new { message = "Không tìm thấy bàn ăn này trên hệ thống!" });
 
-            banDb.ViTriX = model.ViTriX; //
-            banDb.ViTriY = model.ViTriY; //
-            banDb.IsChinhThuc = model.IsChinhThuc; // Cập nhật trạng thái Kho lưu trữ hay Khu chính thức
+            banDb.ViTriX = model.ViTriX; 
+            banDb.ViTriY = model.ViTriY; 
+            banDb.IsChinhThuc = model.IsChinhThuc;
 
             _context.Set<BanAn>().Update(banDb);
             await _context.SaveChangesAsync();

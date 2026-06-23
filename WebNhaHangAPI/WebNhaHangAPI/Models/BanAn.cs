@@ -1,9 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema; // Bắt buộc phải có dòng này để dùng thuộc tính [Table]
+using System.ComponentModel.DataAnnotations.Schema; 
 
 namespace WebNhaHangAPI.Models
 {
-    [Table("danhsachbanan")] // ĐẢM BẢO CHÍNH XÁC DÒNG NÀY ĐỂ EF KHÔNG TỰ TÌM BẢNG "banans"
+    [Table("danhsachbanan")] 
     public class BanAn
     {
         [Key]

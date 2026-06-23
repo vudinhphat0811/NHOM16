@@ -14,5 +14,7 @@ namespace WebNhaHangAPI.Data
         public DbSet<MonAn> DanhSachMonAn { get; set; }
         public DbSet<DanhMuc> DanhSachDanhMuc { get; set; }
         public DbSet<KhuVuc> DanhSachKhuVuc { get; set; }
+        public DbSet<DatBan> DanhSachDatBan { get; set; }
+        public DbSet<ChiTietGoiMon> ChiTietGoiMonAn { get; set; }
     }
 }
