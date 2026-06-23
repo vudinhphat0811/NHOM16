@@ -1,26 +1,28 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations.Schema; // Bắt buộc phải có dòng này để dùng thuộc tính [Table]
 
 namespace WebNhaHangAPI.Models
 {
+    // HÃY ĐỔI "danhsachmonan" THÀNH ĐÚNG TÊN BẢNG TRONG MYSQL CỦA BẠN (Ví dụ: "danhsachmonan" hoặc "monan")
+    [Table("danhsachmonan")]
     public class MonAn
     {
         [Key]
         public int Id { get; set; }
 
         [Required]
-        public string TenMon { get; set; }
+        public string TenMon { get; set; } = string.Empty;
 
-        public string MoTa { get; set; }
-
-        [Column(TypeName = "decimal(18,2)")]
         public decimal Gia { get; set; }
 
-        public string HinhAnh { get; set; }
+        public string? MoTa { get; set; }
 
-        public int DanhMucId { get; set; } 
+        public string? HinhAnh { get; set; }
 
+        public int DanhMucId { get; set; }
+
+        // Nếu bạn có thiết lập mối quan hệ khóa ngoại với bảng DanhMuc
         [System.Text.Json.Serialization.JsonIgnore]
-        public DanhMuc? DanhMuc { get; set; } 
+        public DanhMuc? DanhMuc { get; set; }
     }
 }
