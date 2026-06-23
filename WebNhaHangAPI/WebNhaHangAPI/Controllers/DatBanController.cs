@@ -50,7 +50,7 @@ namespace WebNhaHangAPI.Controllers
             return Ok(lichSu);
         }
 
-        // 3. KHÁCH ĐẶT BÀN ONLINE (Có thể gửi kèm chiTietGoiMons hoặc để trống mảng này đều được)
+        // 3. KHÁCH ĐẶT BÀN ONLINE 
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> Create([FromBody] DatBan model)
@@ -178,6 +178,28 @@ namespace WebNhaHangAPI.Controllers
 
             await _context.SaveChangesAsync();
             return Ok(new { message = "Thanh toán thành công! Bàn ăn đã được dọn sạch về trạng thái trống." });
+        }
+
+        // 8. ADMIN HOẶC KHÁCH HÀNG ÉP HỦY ĐƠN ĐẶT BÀN Ở BẤT KỲ TRẠNG THÁI NÀO ĐỂ GIẢI PHÓNG BÀN VỀ TRỐNG
+        [HttpPut("{id}/khach-huy-ban")]
+        [Authorize]
+        public async Task<IActionResult> ClientCancelBooking(int id)
+        {
+            // Bỏ kiểm tra phân quyền sở hữu UserId và bỏ chặn Trạng thái Chờ xác nhận để Admin ép hủy bất kỳ lúc nào
+            var don = await _context.Set<DatBan>().Include(db => db.BanAn).FirstOrDefaultAsync(x => x.Id == id);
+
+            if (don == null) return NotFound(new { message = "Không tìm thấy thông tin đơn đặt bàn này!" });
+
+            don.TrangThai = "Đã hủy";
+
+            if (don.BanAn != null)
+            {
+                don.BanAn.TrangThai = "Trống";
+                _context.Set<BanAn>().Update(don.BanAn);
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Đã hủy đơn đặt bàn và giải phóng bàn ăn thành công!", data = don });
         }
     }
 }
