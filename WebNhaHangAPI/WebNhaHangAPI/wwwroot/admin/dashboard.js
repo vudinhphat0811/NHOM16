@@ -60,11 +60,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                 document.getElementById("lblAdminName").innerText = data.email.split('@')[0];
             }
 
-            // Tải dữ liệu từ API
-            await loadAllCategories();
-            await loadAllLocations();
-            await loadAllDishes();
-            await loadAllTables();
+            // Tải dữ liệu an toàn từ API (Tách biệt luồng tránh nghẽn luồng xử lý)
+            await loadAllCategories().catch(e => console.error(e));
+            await loadAllLocations().catch(e => console.error(e));
+            await loadAllDishes().catch(e => console.error(e));
+            await loadAllTables().catch(e => console.error(e));
         }
     } catch (error) {
         console.error("Lỗi xác thực người dùng:", error);
@@ -331,12 +331,11 @@ function selectUserToConfigRole(email, role, id) {
     thayDoiGiaoDienCheckboxTheoQuyen(role);
 }
 
-// Hàm hiển thị ma trận quyền hạn minh họa 2 quyền Admin vs Customer cho đẹp mắt
 function thayDoiGiaoDienCheckboxTheoQuyen(role) {
     const tbody = document.getElementById("tbRoleMatrixBody");
     if (!tbody) return;
 
-    const isAdmin = (role === 'Admin');
+    const isAdmin = role === 'Admin';
 
     tbody.innerHTML = `
         <tr class="hover:bg-gray-50/50 transition">
@@ -374,51 +373,128 @@ async function luuCauHinhPhanQuyen() {
     } catch (err) { console.error(err); }
 }
 
-// ================= CÁC HÀM XỬ LÝ ĐƠN HÀNG KHÁC =================
-async function approveAdminDeposit(id) {
-    if (!confirm("Xác nhận duyệt cọc giữ chỗ cho đơn này?")) return;
+// ================= THAO TÁC DANH MỤC & MÓN ĂN (SỬA LỖI ĐƯỜNG DẪN RENDER) =================
+async function loadAllCategories() {
     try {
-        const res = await fetch(`/api/DatBan/${id}/xac-nhan-coc?phuongThuc=Chuyển khoản`, { method: "PUT", headers: { "Authorization": `Bearer ${token}` } });
-        if (res.ok) { showToast("Duyệt đơn giữ bàn thành công!", "success"); await fetchAdminOrdersData(); await loadAllTables(); }
-    } catch (err) { showToast("Lỗi kết nối!", "error"); }
+        const res = await fetch("/api/Admin/get-all-categories");
+        if (res.ok) {
+            globalCategories = await res.json();
+            const tbody = document.getElementById("tbCategoryBody"); if (tbody) tbody.innerHTML = "";
+            const ddlCategory = document.getElementById("ddlDishCategory"); if (ddlCategory) ddlCategory.innerHTML = "";
+            const filterContainer = document.getElementById("divMenuFilters");
+
+            if (filterContainer) filterContainer.innerHTML = `<button onclick="filterByGlobalCategory('Tất cả')" class="bg-[#cc4e11] text-white px-3 py-1.5 rounded-lg cursor-pointer font-bold transition shadow-2xs">Tất cả</button>`;
+
+            globalCategories.forEach(cat => {
+                if (tbody) {
+                    const tr = document.createElement("tr"); tr.className = "hover:bg-gray-50 transition border-b border-gray-100";
+                    tr.innerHTML = `<td class="p-4 text-center text-gray-400 font-bold">#${cat.id}</td><td class="p-4 text-gray-900 font-bold text-sm">${cat.tenDanhMuc}</td><td class="p-4 text-center space-x-2"><button onclick='editCategoryClick(${JSON.stringify(cat)})' class="text-gray-400 hover:text-blue-600 p-1 rounded cursor-pointer"><i class="fa-regular fa-pen-to-square"></i></button><button onclick="deleteCategory(${cat.id})" class="text-gray-400 hover:text-red-600 p-1 rounded cursor-pointer"><i class="fa-regular fa-trash-can"></i></button></td>`;
+                    tbody.appendChild(tr);
+                }
+                if (ddlCategory) {
+                    const opt = document.createElement("option"); opt.value = cat.id; opt.innerText = cat.tenDanhMuc; ddlCategory.appendChild(opt);
+                }
+                if (filterContainer) {
+                    const btnFilter = document.createElement("button"); btnFilter.className = "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded-lg cursor-pointer transition font-bold";
+                    btnFilter.innerText = cat.tenDanhMuc; btnFilter.onclick = () => filterByGlobalCategory(cat.id); filterContainer.appendChild(btnFilter);
+                }
+            });
+        }
+    } catch (err) { console.error("Lỗi tải danh mục:", err); }
 }
 
-async function executeRejectBooking(id) {
-    if (!confirm("Xác nhận hủy đơn hàng này và giải phóng trạng thái bàn về Trống?")) return;
+async function loadAllDishes() {
     try {
-        const res = await fetch(`/api/DatBan/${id}/khach-huy-ban`, { method: "PUT", headers: { "Authorization": `Bearer ${token}` } });
-        if (res.ok) { showToast("Đã hủy đơn và giải phóng trạng thái bàn ăn thành công!", "success"); await fetchAdminOrdersData(); await loadAllTables(); }
-    } catch (err) { showToast("Lỗi kết nối mạng!", "error"); }
+        const res = await fetch("/api/MonAn"); // Sử dụng API chung đã test chạy được ngoài sảnh
+        if (res.ok) {
+            globalDishes = await res.json();
+            if (document.getElementById("lblTotalDishes"))
+                document.getElementById("lblTotalDishes").innerText = globalDishes.length;
+        }
+    } catch (err) { console.error("Lỗi tải thực đơn món ăn:", err); }
 }
 
-async function executeCheckInCustomer(id) {
-    if (!confirm("Xác nhận khách đã đến nhà hàng ăn uống và hoàn tất hóa đơn này?")) return;
+function renderDishesTable(dishes) {
+    const tbody = document.getElementById("tbMenuBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    if (dishes.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-400 italic">Thực đơn hiện tại đang trống!</td></tr>`; return;
+    }
+    dishes.forEach(mon => {
+        const idMonAn = mon.id;
+        const tenMon = mon.tenMon;
+        const giaMon = mon.gia;
+        const linkAnh = mon.hinhAnh || "https://images.unsplash.com/photo-1546964124-0cce460f38ef";
+        const trangThaiMon = mon.trangThai || "Đang phục vụ";
+        const currentCatId = mon.danhMucId;
+
+        const matchedCat = globalCategories.find(c => c.id === currentCatId);
+        const textDanhMuc = matchedCat ? matchedCat.tenDanhMuc : "Món chính";
+        const statusBadge = trangThaiMon === "Đang phục vụ" ? `<span class="bg-emerald-50 text-emerald-600 border border-emerald-200 px-2 py-0.5 rounded-full font-bold text-[10px] inline-flex items-center"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1"></span> Đang phục vụ</span>` : `<span class="bg-gray-100 text-gray-400 border border-gray-200 px-2 py-0.5 rounded-full font-bold text-[10px] inline-flex items-center"><span class="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1"></span> Tạm hết</span>`;
+
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-gray-50 transition border-b border-gray-100";
+        tr.innerHTML = `<td class="p-4 text-center text-gray-400 font-bold">#${idMonAn}</td><td class="p-4 flex items-center space-x-3"><img src="${linkAnh}" class="w-11 h-11 object-cover rounded-xl border border-gray-100 shadow-xs" onerror="this.src='https://images.unsplash.com/photo-1546964124-0cce460f38ef'"><span class="font-bold text-gray-900 text-xs">${tenMon}</span></td><td class="p-4 uppercase text-[10px] font-bold text-orange-600 tracking-wider">${textDanhMuc}</td><td class="p-4 font-black text-orange-800 text-xs">${Number(giaMon).toLocaleString('vi-VN')} đ</td><td class="p-4">${statusBadge}</td><td class="p-4 text-center space-x-1.5"><button onclick='editDishClick(${JSON.stringify(mon)})' class="text-gray-400 hover:text-blue-600 p-1 rounded cursor-pointer transition"><i class="fa-regular fa-pen-to-square"></i></button><button onclick="deleteDish(${idMonAn})" class="text-gray-400 hover:text-red-600 p-1 rounded cursor-pointer transition"><i class="fa-regular fa-trash-can"></i></button></td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+function filterByGlobalCategory(catId) {
+    if (catId === 'Tất cả') renderDishesTable(globalDishes);
+    else renderDishesTable(globalDishes.filter(m => (m.danhMucId || m.DanhMucId) === catId));
+}
+
+function openMenuFormModal() { document.getElementById("lblMenuModalTitle").innerText = "Thêm món ăn mới"; document.getElementById("txtDishId").value = ""; document.getElementById("txtDishName").value = ""; document.getElementById("txtDishPrice").value = ""; document.getElementById("fileDishImage").value = ""; if (globalCategories.length > 0 && document.getElementById("ddlDishCategory")) document.getElementById("ddlDishCategory").value = globalCategories[0].id; const modal = document.getElementById("menuFormModal"); if (modal) modal.classList.remove("hidden"); setTimeout(() => { if (modal) modal.classList.remove("opacity-0"); }, 15); }
+function closeMenuFormModal() { const modal = document.getElementById("menuFormModal"); if (modal) { modal.classList.add("opacity-0"); setTimeout(() => modal.classList.add("hidden"), 300); } }
+function editDishClick(monAn) { openMenuFormModal(); document.getElementById("lblMenuModalTitle").innerText = "Cập nhật thông tin món ăn"; document.getElementById("txtDishId").value = monAn.id || monAn.Id; document.getElementById("txtDishName").value = monAn.tenMon || monAn.TenMon || ""; document.getElementById("txtDishPrice").value = monAn.gia || monAn.Gia || 0; if (document.getElementById("ddlDishStatus")) document.getElementById("ddlDishStatus").value = monAn.trangThai || monAn.TrangThai || "Đang phục vụ"; if (document.getElementById("ddlDishCategory")) document.getElementById("ddlDishCategory").value = monAn.danhMucId || monAn.DanhMucId; }
+
+async function saveMenuData() {
+    const id = document.getElementById("txtDishId").value;
+    const fileInput = document.getElementById("fileDishImage");
+    const formData = new FormData();
+
+    formData.append("tenMonAn", document.getElementById("txtDishName").value.trim());
+    formData.append("danhMucId", parseInt(document.getElementById("ddlDishCategory").value));
+    formData.append("giaBan", parseFloat(document.getElementById("txtDishPrice").value));
+    formData.append("trangThai", document.getElementById("ddlDishStatus").value);
+    if (fileInput && fileInput.files.length > 0) formData.append("hinhAnhFile", fileInput.files[0]);
+
+    let url = id ? `/api/MonAn/${id}` : "/api/MonAn";
+    let method = id ? "PUT" : "POST";
+
     try {
-        const res = await fetch(`/api/DatBan/${id}/thanh-toan-hoan-tat`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            }
+        const res = await fetch(url, {
+            method: method,
+            headers: { "Authorization": `Bearer ${token}` },
+            body: formData
+        });
+
+        if (res.ok) {
+            showToast("Lưu món ăn thành công!", "success");
+            closeMenuFormModal();
+            await loadAllDishes();
+            renderDishesTable(globalDishes);
+        } else {
+            const errData = await res.json();
+            showToast(errData.message || "Lỗi khi xử lý dữ liệu!", "error");
+        }
+    } catch (err) { console.error(err); }
+}
+
+async function deleteDish(id) {
+    if (!id || !confirm("Xóa vĩnh viễn món ăn này khỏi hệ thống?")) return;
+    try {
+        const res = await fetch(`/api/MonAn/${id}`, {
+            method: "DELETE",
+            headers: { "Authorization": `Bearer ${token}` }
         });
         if (res.ok) {
-            showToast("Đã hoàn tất đơn đặt bàn và chuyển thông tin vào Báo cáo doanh thu thành công!", "success");
-            await fetchAdminOrdersData();
-            await loadAllTables();
-        } else {
-            showToast("Lỗi khi kết nối máy chủ hoàn tất hóa đơn!", "error");
+            showToast("Xóa món ăn thành công!", "success");
+            await loadAllDishes();
+            renderDishesTable(globalDishes);
         }
-    } catch (err) { showToast("Lỗi kết nối mạng!", "error"); }
-}
-
-function deleteCanceledOrderRow(id) {
-    if (!confirm("Bạn muốn xóa đơn đã hủy #BK-" + id + " này? Hệ thống sẽ ẩn vĩnh viễn khỏi danh sách.")) return;
-    const deletedIds = JSON.parse(localStorage.getItem("admin_deleted_orders") || "[]");
-    if (!deletedIds.includes(id)) { deletedIds.push(id); localStorage.setItem("admin_deleted_orders", JSON.stringify(deletedIds)); }
-    adminOrdersList = adminOrdersList.filter(o => (o.id || o.Id) !== id);
-    calculateOrderStatistics(adminOrdersList);
-    renderOrderTable(adminOrdersList);
-    showToast("Đã xóa đơn hàng ra khỏi danh sách hiển thị thành công!", "success");
+    } catch (err) { console.error(err); }
 }
 
 // ================= QUẢN LÝ KHU VỰC VỊ TRÍ =================
@@ -570,12 +646,6 @@ async function saveTableData() {
     } catch (err) { }
 }
 async function deleteTable(id) { if (!confirm("Xóa bàn ăn này?")) return; try { const res = await fetch(`/api/Admin/delete-table/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${token}` } }); if (res.ok) { showToast("Xóa bàn thành công", "success"); await loadAllTables(); } } catch (err) { } }
-
-function openCategoryFormModal() { document.getElementById("lblCategoryModalTitle").innerText = "Thêm danh mục mới"; document.getElementById("txtCategoryId").value = ""; document.getElementById("txtCategoryName").value = ""; const modal = document.getElementById("categoryFormModal"); if (modal) modal.classList.remove("hidden"); setTimeout(() => { if (modal) modal.classList.remove("opacity-0"); }, 15); }
-function closeCategoryFormModal() { const modal = document.getElementById("categoryFormModal"); if (modal) { modal.classList.add("opacity-0"); setTimeout(() => modal.classList.add("hidden"), 300); } }
-function editCategoryClick(cat) { openCategoryFormModal(); document.getElementById("lblCategoryModalTitle").innerText = "Cập nhật danh mục"; document.getElementById("txtCategoryId").value = cat.id; document.getElementById("txtCategoryName").value = cat.tenDanhMuc; }
-async function saveCategoryData() { const id = document.getElementById("txtCategoryId").value; const bodyData = { tenDanhMuc: document.getElementById("txtCategoryName").value.trim() }; let url = id ? `/api/Admin/update-category/${id}` : "/api/Admin/add-category"; let method = id ? "PUT" : "POST"; try { const res = await fetch(url, { method: method, headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, body: JSON.stringify(bodyData) }); if (res.ok) { showToast("Lưu danh mục thành công", "success"); closeCategoryFormModal(); await loadAllCategories(); if (globalDishes.length > 0) renderDishesTable(globalDishes); } } catch (err) { } }
-async function deleteCategory(id) { if (!confirm("Xóa danh mục này?")) return; try { const res = await fetch(`/api/Admin/delete-category/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${token}` } }); if (res.ok) { showToast("Xóa thành công", "success"); await loadAllCategories(); await loadAllDishes(); } } catch (err) { } }
 
 function openLogoutModal() { const modal = document.getElementById("logoutModal"); if (modal) { modal.classList.remove("hidden"); setTimeout(() => { modal.classList.remove("opacity-0"); }, 10); } }
 function closeLogoutModal() { const modal = document.getElementById("logoutModal"); if (modal) { modal.classList.add("opacity-0"); setTimeout(() => modal.classList.add("hidden"), 300); } }
