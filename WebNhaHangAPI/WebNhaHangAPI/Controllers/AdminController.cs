@@ -330,5 +330,53 @@ namespace WebNhaHangAPI.Controllers
             await _context.SaveChangesAsync();
             return Ok(new { message = "Đã lưu vị trí và trạng thái sơ đồ bàn ăn thành công!" });
         }
+        // =========================================================================
+        // ================= 3. API BỔ TRỢ QUẢN LÝ PHÂN QUYỀN HỆ THỐNG ==============
+        // =========================================================================
+
+        [HttpGet("get-all-users-with-roles")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAllUsersWithRoles()
+        {
+            var users = await _userManager.Users.ToListAsync();
+            var resultList = new System.Collections.Generic.List<object>();
+
+            foreach (var user in users)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                resultList.Add(new
+                {
+                    Id = user.Id,
+                    Email = user.Email,
+                    Roles = roles
+                });
+            }
+            return Ok(resultList);
+        }
+
+        [HttpPost("update-user-role-matrix")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateUserRoleMatrix([FromBody] RequestGanQuyen model)
+        {
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null) return NotFound(new { message = "Không tìm thấy tài khoản nhân viên!" });
+
+
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            await _userManager.RemoveFromRolesAsync(user, currentRoles);
+
+  
+            var roleExists = await _roleManager.RoleExistsAsync(model.TenQuyen);
+            if (!roleExists)
+            {
+                await _roleManager.CreateAsync(new IdentityRole(model.TenQuyen));
+            }
+
+
+            var result = await _userManager.AddToRoleAsync(user, model.TenQuyen);
+            if (result.Succeeded) return Ok(new { message = $"Đã cập nhật chức vụ mới thành công!" });
+
+            return BadRequest(new { message = "Cập nhật chức vụ thất bại!" });
+        }
     }
 }
