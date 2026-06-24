@@ -6,6 +6,8 @@ let globalTables = [];
 let globalLocations = [];
 let adminOrdersList = []; // Mảng gốc lưu trữ danh sách đơn hàng phục vụ tính năng tìm kiếm
 let currentAdminLocationId = null;
+let mangToanCucNhanVien = []; // Mảng lưu trữ danh sách tài khoản cho chức năng phân quyền
+let emailNhanVienDangChon = "";
 
 // Hàm hiển thị thông báo Toast
 function showToast(message, type = 'success') {
@@ -74,24 +76,19 @@ document.addEventListener("DOMContentLoaded", async function () {
 });
 
 // ================= ĐIỀU HƯỚNG CHUYỂN TAB ĐỘNG =================
-// ================= ĐIỀU HƯỚNG CHUYỂN TAB ĐỘNG =================
 async function switchTab(tabId, element) {
     const mainContent = document.getElementById("main-content");
     if (!mainContent) return;
 
-    // Đường dẫn tuyệt đối trỏ thẳng vào thư mục chứa các component của bạn
     const componentUrl = `/admin/components/tab-${tabId}.html`;
-
     mainContent.innerHTML = `<div class="p-8 text-center font-semibold text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Đang tải dữ liệu...</div>`;
 
-    // Thêm chuỗi ngẫu nhiên phá cache trình duyệt, ép cập nhật giao diện mới liên tục
     const success = await loadComponent(`${componentUrl}?v=${Math.random()}`, 'main-content');
     if (!success) {
         mainContent.innerHTML = `<div class="p-8 text-center text-red-500">Lỗi: Không tìm thấy file tại đường dẫn '${componentUrl}'.</div>`;
         return;
     }
 
-    // Cập nhật trạng thái Active trên Sidebar Menu
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     if (element) element.classList.add('active');
 
@@ -100,32 +97,30 @@ async function switchTab(tabId, element) {
     }
 
     const searchArea = document.getElementById("divHeaderSearchArea");
-    const btnExcel = document.getElementById("btnExportExcel"); // Lấy nút Excel từ DOM
+    const btnExcel = document.getElementById("btnExportExcel");
 
-    // Thực thi nạp dữ liệu từ API tương ứng với từng Tab
     try {
         if (tabId === 'order') {
-            // Hiển thị ô tìm kiếm của tab duyệt đơn
             if (searchArea) {
                 searchArea.classList.remove('hidden');
                 const txtSearch = document.getElementById("txtOrderSearch");
                 if (txtSearch) {
-                    txtSearch.value = ""; // Xóa từ khóa cũ
+                    txtSearch.value = "";
                     txtSearch.placeholder = "Tìm tên khách, SĐT, mã đơn...";
                 }
             }
-
-            // ẨN NÚT EXCEL: Khi ở tab duyệt đơn (Chỉ bật nút này bên tab Thống Kê)
             if (btnExcel) btnExcel.classList.add("hidden");
-
             await fetchAdminOrdersData();
         } else {
-            // Ẩn ô tìm kiếm đối với các tab thông thường khác
             if (searchArea) searchArea.classList.add('hidden');
-
-            // ẨN NÚT EXCEL: Khi chuyển sang các tab menu, danh mục, sơ đồ bàn ăn
             if (btnExcel) btnExcel.classList.add("hidden");
 
+            if (tabId === 'role') {
+                if (document.getElementById("lblHeaderContext")) {
+                    document.getElementById("lblHeaderContext").innerText = "ROLE & PERMISSION MANAGEMENT";
+                }
+                await taiDanhSachQuyenHeThong();
+            }
             if (tabId === 'menu') {
                 await loadAllDishes();
                 renderDishesTable(globalDishes);
@@ -150,12 +145,10 @@ async function fetchAdminOrdersData() {
         if (res.ok) {
             const rawOrders = await res.json();
             const deletedIds = JSON.parse(localStorage.getItem("admin_deleted_orders") || "[]");
-
-            // Lưu dữ liệu vào danh sách gốc toàn cục
             adminOrdersList = rawOrders.filter(o => !deletedIds.includes(o.id || o.Id));
 
             calculateOrderStatistics(adminOrdersList);
-            renderOrderTable(adminOrdersList); // Đổ dữ liệu ra bảng
+            renderOrderTable(adminOrdersList);
         }
     } catch (err) { console.error("Lỗi tải đơn hàng:", err); }
 }
@@ -168,7 +161,6 @@ function calculateOrderStatistics(orders) {
     document.getElementById("lblStatCanceled").innerText = orders.filter(o => (o.trangThai || o.TrangThai || "").trim() === "Đã hủy").length;
 }
 
-// Tách biệt hàm render bảng để có thể gọi lại mượt mà khi tìm kiếm
 function renderOrderTable(orders) {
     const tbody = document.getElementById("tbOrderDashboardBody");
     if (!tbody) return;
@@ -220,9 +212,7 @@ function renderOrderTable(orders) {
     });
 }
 
-// CẬP NHẬT: HÀM XỬ LÝ TÌM KIẾM ĐƠN DUYỆT TRONG TAB ORDER MANAGEMENT
 function handleAdminOrderSearch() {
-    console.log(adminOrdersList[0]);
     const searchInput = document.getElementById("txtOrderSearch");
     if (!searchInput) return;
 
@@ -233,18 +223,158 @@ function handleAdminOrderSearch() {
     } else {
         const filtered = adminOrdersList.filter(o => {
             const detail = o.chiTiet || o.orderDetail || o.donHangChiTiet || o;
-
             const name = (detail.tenKhachHang || detail.TenKhachHang || o.tenKhachHang || "").toLowerCase();
             const phone = (detail.soDienThoai || detail.SoDienThoai || o.soDienThoai || "").toString();
             const orderId = (o.id || o.Id || detail.id || "").toString().toLowerCase();
 
             return name.includes(keyword) || phone.includes(keyword) || orderId.includes(keyword);
         });
-
         renderOrderTable(filtered);
     }
 }
 
+// ================= QUẢN LÝ XUẤT BÁO CÁO EXCEL =================
+function xuatExcelDonHang() {
+    let danhSachXuatBaoCao = [];
+    const context = document.getElementById('lblHeaderContext').innerText.toUpperCase();
+
+    if (context.includes("STATISTICAL") || context.includes("REPORT")) {
+        danhSachXuatBaoCao = typeof tatCaDanhSachDonThongKe !== "undefined" ? tatCaDanhSachDonThongKe : [];
+    } else {
+        danhSachXuatBaoCao = window.adminOrdersList || adminOrdersList || [];
+    }
+
+    if (!danhSachXuatBaoCao || danhSachXuatBaoCao.length === 0) {
+        alert("Không có dữ liệu hóa đơn nào ở tab này để xuất file!");
+        return;
+    }
+
+    let csvContent = "\uFEFF";
+    csvContent += "Mã Đơn,Bàn Ăn,Trạng Thái Cọc,Số Tiền Cọc,Phương Thức\n";
+
+    danhSachXuatBaoCao.forEach(o => {
+        const detail = o.chiTiet || o.orderDetail || o.donHangChiTiet || o.datBan || o;
+        const maDon = (o.id || o.Id || detail.id || "---").toString().replace(/,/g, " ");
+        const banAn = `Bàn ${o.banAnId || detail.banAnId || "---"}`;
+        const trangThaiCoc = (o.trangThaiCoc || detail.trangThaiCoc || "---").replace(/,/g, " ");
+        const soTienCoc = o.tienCoc || o.TienCoc || detail.tienCoc || detail.TienCoc || 0;
+        const phuongThuc = (o.phuongThucThanhToan || detail.phuongThucThanhToan || "Mặc định").replace(/,/g, " ");
+
+        csvContent += `"#${maDon}","${banAn}","${trangThaiCoc}","${soTienCoc}đ","${phuongThuc}"\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const thoiGian = new Date().toISOString().slice(0, 10);
+
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Bao_Cao_Doanh_Thu_Ngay_${thoiGian}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// ================= QUẢN LÝ PHÂN QUYỀN HỆ THỐNG =================
+async function taiDanhSachQuyenHeThong() {
+    const container = document.getElementById("divRoleGroupContainer");
+    if (!container) return;
+
+    try {
+        const res = await fetch("/api/Admin/get-all-users-with-roles", { method: "GET", headers: { "Authorization": `Bearer ${token}` } });
+        if (res.ok) {
+            mangToanCucNhanVien = await res.json();
+            container.innerHTML = "";
+
+            if (mangToanCucNhanVien.length === 0) {
+                container.innerHTML = `<p class="text-center text-gray-400 py-4 italic">Hệ thống chưa có nhân viên nào.</p>`;
+                return;
+            }
+
+            mangToanCucNhanVien.forEach((user, index) => {
+                const roleName = user.roles.length > 0 ? user.roles[0] : "Chưa phân chức vụ";
+                const isSelected = index === 0;
+                if (isSelected) emailNhanVienDangChon = user.email;
+
+                const divCard = document.createElement("div");
+                divCard.id = `user-role-card-${user.id}`;
+                divCard.className = `p-3 border rounded-xl flex justify-between items-center cursor-pointer transition ${isSelected ? 'bg-indigo-50/70 border-indigo-200' : 'bg-gray-50/50 border-gray-100 hover:bg-gray-50'}`;
+                divCard.onclick = () => selectUserToConfigRole(user.email, roleName, user.id);
+
+                divCard.innerHTML = `
+                    <div>
+                        <h4 class="font-extrabold text-xs text-gray-900 truncate max-w-[170px]">${user.email}</h4>
+                        <p class="text-[10px] text-gray-400 font-semibold mt-0.5">Mã ID: #${user.id.substring(0, 8)}</p>
+                    </div>
+                    <span class="text-[9px] ${roleName === 'Admin' ? 'bg-orange-500' : 'bg-indigo-600'} text-white font-black px-2 py-0.5 rounded-md">${roleName}</span>
+                `;
+                container.appendChild(divCard);
+            });
+
+            if (mangToanCucNhanVien.length > 0) {
+                selectUserToConfigRole(mangToanCucNhanVien[0].email, mangToanCucNhanVien[0].roles[0] || "Staff", mangToanCucNhanVien[0].id);
+            }
+        }
+    } catch (err) { console.error("Lỗi tải phân quyền:", err); }
+}
+
+function selectUserToConfigRole(email, role, id) {
+    emailNhanVienDangChon = email;
+    if (document.getElementById("lblSelectedUserEmail")) document.getElementById("lblSelectedUserEmail").innerText = `(${email})`;
+    if (document.getElementById("ddlUserRoleSelect")) document.getElementById("ddlUserRoleSelect").value = role === "Chưa phân chức vụ" ? "Staff" : role;
+
+    document.querySelectorAll("#divRoleGroupContainer > div").forEach(el => el.className = "p-3 bg-gray-50/50 border border-gray-100 hover:bg-gray-50 rounded-xl flex justify-between items-center cursor-pointer transition");
+    const activeCard = document.getElementById(`user-role-card-${id}`);
+    if (activeCard) activeCard.className = "p-3 bg-indigo-50/70 border border-indigo-200 rounded-xl flex justify-between items-center cursor-pointer transition";
+
+    thayDoiGiaoDienCheckboxTheoQuyen(role);
+}
+
+// Hàm hiển thị ma trận quyền hạn minh họa 2 quyền Admin vs Customer cho đẹp mắt
+function thayDoiGiaoDienCheckboxTheoQuyen(role) {
+    const tbody = document.getElementById("tbRoleMatrixBody");
+    if (!tbody) return;
+
+    const isAdmin = (role === 'Admin');
+
+    tbody.innerHTML = `
+        <tr class="hover:bg-gray-50/50 transition">
+            <td class="px-6 py-4 font-bold text-gray-900">🏠 Trang chủ & Đặt bàn khách hàng</td>
+            <td class="px-6 py-4 text-center"><i class="fa-solid fa-circle-check text-emerald-500 text-sm"></i> Bật</td>
+            <td class="px-6 py-4 text-center"><i class="fa-solid fa-circle-check text-emerald-500 text-sm"></i> Bật</td>
+        </tr>
+        <tr class="hover:bg-gray-50/50 transition">
+            <td class="px-6 py-4 font-bold text-gray-900">📦 Quản lý đơn hàng & Báo cáo doanh thu (Admin)</td>
+            <td class="px-6 py-4 text-center"><i class="fa-solid fa-circle-xmark text-gray-300 text-sm"></i> Khóa</td>
+            <td class="px-6 py-4 text-center">${isAdmin ? '<i class="fa-solid fa-circle-check text-emerald-500 text-sm"></i> Cho phép' : '<i class="fa-solid fa-circle-xmark text-rose-500 text-sm"></i> Khóa'}</td>
+        </tr>
+        <tr class="hover:bg-gray-50/50 transition">
+            <td class="px-6 py-4 font-bold text-gray-900">🗺️ Thiết lập sơ đồ bàn & Thực đơn (Admin)</td>
+            <td class="px-6 py-4 text-center"><i class="fa-solid fa-circle-xmark text-gray-300 text-sm"></i> Khóa</td>
+            <td class="px-6 py-4 text-center">${isAdmin ? '<i class="fa-solid fa-circle-check text-emerald-500 text-sm"></i> Cho phép' : '<i class="fa-solid fa-circle-xmark text-rose-500 text-sm"></i> Khóa'}</td>
+        </tr>
+    `;
+}
+
+async function luuCauHinhPhanQuyen() {
+    const roleMoi = document.getElementById("ddlUserRoleSelect").value;
+    if (!emailNhanVienDangChon) return;
+
+    try {
+        const res = await fetch("/api/Admin/update-user-role-matrix", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            body: JSON.stringify({ email: emailNhanVienDangChon, tenQuyen: roleMoi })
+        });
+        if (res.ok) {
+            showToast("Đã cập nhật phân quyền nhân viên thành công xuống Database!", "success");
+            await taiDanhSachQuyenHeThong();
+        } else { showToast("Cập nhật thất bại!", "error"); }
+    } catch (err) { console.error(err); }
+}
+
+// ================= CÁC HÀM XỬ LÝ ĐƠN HÀNG KHÁC =================
 async function approveAdminDeposit(id) {
     if (!confirm("Xác nhận duyệt cọc giữ chỗ cho đơn này?")) return;
     try {
@@ -441,187 +571,11 @@ async function saveTableData() {
 }
 async function deleteTable(id) { if (!confirm("Xóa bàn ăn này?")) return; try { const res = await fetch(`/api/Admin/delete-table/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${token}` } }); if (res.ok) { showToast("Xóa bàn thành công", "success"); await loadAllTables(); } } catch (err) { } }
 
-// ================= THAO TÁC DANH MỤC & MÓN ĂN =================
-async function loadAllCategories() {
-    try {
-        const res = await fetch("/api/Admin/get-all-categories");
-        if (res.ok) {
-            globalCategories = await res.json();
-            const tbody = document.getElementById("tbCategoryBody"); if (tbody) tbody.innerHTML = "";
-            const ddlCategory = document.getElementById("ddlDishCategory"); if (ddlCategory) ddlCategory.innerHTML = "";
-            const filterContainer = document.getElementById("divMenuFilters");
-
-            if (filterContainer) filterContainer.innerHTML = `<button onclick="filterByGlobalCategory('Tất cả')" class="bg-[#cc4e11] text-white px-3 py-1.5 rounded-lg cursor-pointer font-bold transition shadow-2xs">Tất cả</button>`;
-
-            globalCategories.forEach(cat => {
-                if (tbody) {
-                    const tr = document.createElement("tr"); tr.className = "hover:bg-gray-50 transition border-b border-gray-100";
-                    tr.innerHTML = `<td class="p-4 text-center text-gray-400 font-bold">#${cat.id}</td><td class="p-4 text-gray-900 font-bold text-sm">${cat.tenDanhMuc}</td><td class="p-4 text-center space-x-2"><button onclick='editCategoryClick(${JSON.stringify(cat)})' class="text-gray-400 hover:text-blue-600 p-1 rounded cursor-pointer"><i class="fa-regular fa-pen-to-square"></i></button><button onclick="deleteCategory(${cat.id})" class="text-gray-400 hover:text-red-600 p-1 rounded cursor-pointer"><i class="fa-regular fa-trash-can"></i></button></td>`;
-                    tbody.appendChild(tr);
-                }
-                if (ddlCategory) {
-                    const opt = document.createElement("option"); opt.value = cat.id; opt.innerText = cat.tenDanhMuc; ddlCategory.appendChild(opt);
-                }
-                if (filterContainer) {
-                    const btnFilter = document.createElement("button"); btnFilter.className = "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded-lg cursor-pointer transition font-bold";
-                    btnFilter.innerText = cat.tenDanhMuc; btnFilter.onclick = () => filterByGlobalCategory(cat.id); filterContainer.appendChild(btnFilter);
-                }
-            });
-        }
-    } catch (err) { console.error(err); }
-}
-function xuatExcelDonHang() {
-    // 1. TỰ ĐỘNG NHẬN DIỆN MẢNG DỮ LIỆU ĐANG HIỂN THỊ TRÊN MÀN HÌNH
-    let danhSachXuatBaoCao = [];
-
-    const context = document.getElementById('lblHeaderContext').innerText.toUpperCase();
-    if (context.includes("STATISTICAL") || context.includes("REPORT")) {
-        // Nếu ở tab Thống kê báo cáo -> lấy mảng của file statistics.js
-        danhSachXuatBaoCao = typeof tatCaDanhSachDonThongKe !== "undefined" ? tatCaDanhSachDonThongKe : [];
-    } else {
-        // Nếu ở tab duyệt đơn -> lấy mảng của file dashboard.js
-        danhSachXuatBaoCao = window.adminOrdersList || adminOrdersList || [];
-    }
-
-    // 2. Kiểm tra nếu mảng rỗng thì mới cảnh báo dừng lại
-    if (!danhSachXuatBaoCao || danhSachXuatBaoCao.length === 0) {
-        alert("Không có dữ liệu hóa đơn nào ở tab này để xuất file!");
-        return;
-    }
-
-    // 3. Định nghĩa các tiêu đề cột cho file Excel
-    let csvContent = "\uFEFF"; // Ký tự BOM giúp Excel nhận diện font tiếng Việt không lỗi
-    csvContent += "Mã Đơn,Bàn Ăn,Trạng Thái Cọc,Số Tiền Cọc,Phương Thức\n";
-
-    // 4. Duyệt qua mảng dữ liệu đã xác định để đóng gói vào hàng Excel
-    danhSachXuatBaoCao.forEach(o => {
-        const detail = o.chiTiet || o.orderDetail || o.donHangChiTiet || o.datBan || o;
-
-        const maDon = (o.id || o.Id || detail.id || "---").toString().replace(/,/g, " ");
-        const banAn = `Bàn ${o.banAnId || detail.banAnId || "---"}`;
-        const trangThaiCoc = (o.trangThaiCoc || detail.trangThaiCoc || "---").replace(/,/g, " ");
-
-        // Tính tiền cọc thực tế
-        const soTienCoc = o.tienCoc || o.TienCoc || detail.tienCoc || detail.TienCoc || 0;
-        const phuongThuc = (o.phuongThucThanhToan || detail.phuongThucThanhToan || "Mặc định").replace(/,/g, " ");
-
-        // Nối thành một dòng trong file csv
-        csvContent += `"#${maDon}","${banAn}","${trangThaiCoc}","${soTienCoc}đ","${phuongThuc}"\n`;
-    });
-
-    // 5. Kích hoạt tải file tự động xuống thiết bị
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-
-    const thoiGian = new Date().toISOString().slice(0, 10);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Bao_Cao_Doanh_Thu_Ngay_${thoiGian}.csv`);
-
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
 function openCategoryFormModal() { document.getElementById("lblCategoryModalTitle").innerText = "Thêm danh mục mới"; document.getElementById("txtCategoryId").value = ""; document.getElementById("txtCategoryName").value = ""; const modal = document.getElementById("categoryFormModal"); if (modal) modal.classList.remove("hidden"); setTimeout(() => { if (modal) modal.classList.remove("opacity-0"); }, 15); }
 function closeCategoryFormModal() { const modal = document.getElementById("categoryFormModal"); if (modal) { modal.classList.add("opacity-0"); setTimeout(() => modal.classList.add("hidden"), 300); } }
 function editCategoryClick(cat) { openCategoryFormModal(); document.getElementById("lblCategoryModalTitle").innerText = "Cập nhật danh mục"; document.getElementById("txtCategoryId").value = cat.id; document.getElementById("txtCategoryName").value = cat.tenDanhMuc; }
 async function saveCategoryData() { const id = document.getElementById("txtCategoryId").value; const bodyData = { tenDanhMuc: document.getElementById("txtCategoryName").value.trim() }; let url = id ? `/api/Admin/update-category/${id}` : "/api/Admin/add-category"; let method = id ? "PUT" : "POST"; try { const res = await fetch(url, { method: method, headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, body: JSON.stringify(bodyData) }); if (res.ok) { showToast("Lưu danh mục thành công", "success"); closeCategoryFormModal(); await loadAllCategories(); if (globalDishes.length > 0) renderDishesTable(globalDishes); } } catch (err) { } }
 async function deleteCategory(id) { if (!confirm("Xóa danh mục này?")) return; try { const res = await fetch(`/api/Admin/delete-category/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${token}` } }); if (res.ok) { showToast("Xóa thành công", "success"); await loadAllCategories(); await loadAllDishes(); } } catch (err) { } }
-
-async function loadAllDishes() {
-    try {
-        const res = await fetch("/api/MonAn");
-        if (res.ok) {
-            globalDishes = await res.json();
-            if (document.getElementById("lblTotalDishes"))
-                document.getElementById("lblTotalDishes").innerText = globalDishes.length;
-        }
-    } catch (err) { console.error(err); }
-}
-
-function renderDishesTable(dishes) {
-    const tbody = document.getElementById("tbMenuBody");
-    if (!tbody) return;
-    tbody.innerHTML = "";
-    if (dishes.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-400 italic">Thực đơn hiện tại đang trống!</td></tr>`; return;
-    }
-    dishes.forEach(mon => {
-        const idMonAn = mon.id;
-        const tenMon = mon.tenMon;
-        const giaMon = mon.gia;
-        const linkAnh = mon.hinhAnh || "https://images.unsplash.com/photo-1546964124-0cce460f38ef";
-        const trangThaiMon = mon.trangThai || "Đang phục vụ";
-        const currentCatId = mon.danhMucId;
-
-        const matchedCat = globalCategories.find(c => c.id === currentCatId);
-        const textDanhMuc = matchedCat ? matchedCat.tenDanhMuc : "Món chính";
-        const statusBadge = trangThaiMon === "Đang phục vụ" ? `<span class="bg-emerald-50 text-emerald-600 border border-emerald-200 px-2 py-0.5 rounded-full font-bold text-[10px] inline-flex items-center"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1"></span> Đang phục vụ</span>` : `<span class="bg-gray-100 text-gray-400 border border-gray-200 px-2 py-0.5 rounded-full font-bold text-[10px] inline-flex items-center"><span class="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1"></span> Tạm hết</span>`;
-
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-gray-50 transition border-b border-gray-100";
-        tr.innerHTML = `<td class="p-4 text-center text-gray-400 font-bold">#${idMonAn}</td><td class="p-4 flex items-center space-x-3"><img src="${linkAnh}" class="w-11 h-11 object-cover rounded-xl border border-gray-100 shadow-xs" onerror="this.src='https://images.unsplash.com/photo-1546964124-0cce460f38ef'"><span class="font-bold text-gray-900 text-xs">${tenMon}</span></td><td class="p-4 uppercase text-[10px] font-bold text-orange-600 tracking-wider">${textDanhMuc}</td><td class="p-4 font-black text-orange-800 text-xs">${Number(giaMon).toLocaleString('vi-VN')} đ</td><td class="p-4">${statusBadge}</td><td class="p-4 text-center space-x-1.5"><button onclick='editDishClick(${JSON.stringify(mon)})' class="text-gray-400 hover:text-blue-600 p-1 rounded cursor-pointer transition"><i class="fa-regular fa-pen-to-square"></i></button><button onclick="deleteDish(${idMonAn})" class="text-gray-400 hover:text-red-600 p-1 rounded cursor-pointer transition"><i class="fa-regular fa-trash-can"></i></button></td>`;
-        tbody.appendChild(tr);
-    });
-}
-
-function filterByGlobalCategory(catId) {
-    if (catId === 'Tất cả') renderDishesTable(globalDishes);
-    else renderDishesTable(globalDishes.filter(m => (m.danhMucId || m.DanhMucId) === catId));
-}
-
-function openMenuFormModal() { document.getElementById("lblMenuModalTitle").innerText = "Thêm món ăn mới"; document.getElementById("txtDishId").value = ""; document.getElementById("txtDishName").value = ""; document.getElementById("txtDishPrice").value = ""; document.getElementById("fileDishImage").value = ""; if (globalCategories.length > 0 && document.getElementById("ddlDishCategory")) document.getElementById("ddlDishCategory").value = globalCategories[0].id; const modal = document.getElementById("menuFormModal"); if (modal) modal.classList.remove("hidden"); setTimeout(() => { if (modal) modal.classList.remove("opacity-0"); }, 15); }
-function closeMenuFormModal() { const modal = document.getElementById("menuFormModal"); if (modal) { modal.classList.add("opacity-0"); setTimeout(() => modal.classList.add("hidden"), 300); } }
-function editDishClick(monAn) { openMenuFormModal(); document.getElementById("lblMenuModalTitle").innerText = "Cập nhật thông tin món ăn"; document.getElementById("txtDishId").value = monAn.id || monAn.Id; document.getElementById("txtDishName").value = monAn.tenMon || monAn.TenMon || ""; document.getElementById("txtDishPrice").value = monAn.gia || monAn.Gia || 0; if (document.getElementById("ddlDishStatus")) document.getElementById("ddlDishStatus").value = monAn.trangThai || monAn.TrangThai || "Đang phục vụ"; if (document.getElementById("ddlDishCategory")) document.getElementById("ddlDishCategory").value = monAn.danhMucId || monAn.DanhMucId; }
-
-async function saveMenuData() {
-    const id = document.getElementById("txtDishId").value;
-    const fileInput = document.getElementById("fileDishImage");
-    const formData = new FormData();
-
-    formData.append("tenMonAn", document.getElementById("txtDishName").value.trim());
-    formData.append("danhMucId", parseInt(document.getElementById("ddlDishCategory").value));
-    formData.append("giaBan", parseFloat(document.getElementById("txtDishPrice").value));
-    formData.append("trangThai", document.getElementById("ddlDishStatus").value);
-    if (fileInput && fileInput.files.length > 0) formData.append("hinhAnhFile", fileInput.files[0]);
-
-    let url = id ? `/api/MonAn/${id}` : "/api/MonAn";
-    let method = id ? "PUT" : "POST";
-
-    try {
-        const res = await fetch(url, {
-            method: method,
-            headers: { "Authorization": `Bearer ${token}` },
-            body: formData
-        });
-
-        if (res.ok) {
-            showToast("Lưu món ăn lên mây Cloudinary thành công!", "success");
-            closeMenuFormModal();
-            await loadAllDishes();
-            renderDishesTable(globalDishes);
-        } else {
-            const errData = await res.json();
-            showToast(errData.message || "Lỗi khi upload ảnh món ăn!", "error");
-        }
-    } catch (err) { console.error(err); }
-}
-
-async function deleteDish(id) {
-    if (!id || !confirm("Xóa vĩnh viễn món ăn này khỏi hệ thống?")) return;
-    try {
-        const res = await fetch(`/api/MonAn/${id}`, {
-            method: "DELETE",
-            headers: { "Authorization": `Bearer ${token}` }
-        });
-        if (res.ok) {
-            showToast("Xóa món ăn thành công!", "success");
-            await loadAllDishes();
-            renderDishesTable(globalDishes);
-        }
-    } catch (err) { console.error(err); }
-}
 
 function openLogoutModal() { const modal = document.getElementById("logoutModal"); if (modal) { modal.classList.remove("hidden"); setTimeout(() => { modal.classList.remove("opacity-0"); }, 10); } }
 function closeLogoutModal() { const modal = document.getElementById("logoutModal"); if (modal) { modal.classList.add("opacity-0"); setTimeout(() => modal.classList.add("hidden"), 300); } }
