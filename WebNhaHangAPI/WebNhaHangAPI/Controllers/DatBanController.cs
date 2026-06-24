@@ -179,7 +179,6 @@ namespace WebNhaHangAPI.Controllers
             await _context.SaveChangesAsync();
             return Ok(new { message = "Thanh toán thành công! Bàn ăn đã được dọn sạch về trạng thái trống." });
         }
-        // ADMIN THÊM HOẶC TĂNG MÓN ĂN (Dùng cho C# Razor/MVC)
         [HttpPost("admin-them-mon")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AdminAddFoodForm([FromForm] int datBanId, [FromForm] int monAnId, [FromForm] int soLuong, [FromForm] string returnUrl)

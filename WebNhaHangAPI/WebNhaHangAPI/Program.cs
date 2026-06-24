@@ -5,10 +5,11 @@ using WebNhaHangAPI.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var chuoiKetNoi = "server=127.0.0.1;port=3306;database=web_dat_ban_nha_hang;user=root;password=123456";
+// 1. ĐÃ ĐỔI: Chuỗi kết nối trỏ thẳng lên database mây Clever Cloud của bạn
+var chuoiKetNoi = "server=bztgqose7xabliatj3rz-mysql.services.clever-cloud.com;port=3306;database=bztgqose7xabliatj3rz;user=upuauqgeul6xwjpm;password=kedUwT6udn4qWpyHehGz";
+
 builder.Services.AddDbContext<DbContextNhaHang>(options =>
     options.UseMySql(chuoiKetNoi, ServerVersion.AutoDetect(chuoiKetNoi)));
-
 
 builder.Services.AddIdentityApiEndpoints<IdentityUser>()
     .AddRoles<IdentityRole>()
@@ -18,7 +19,6 @@ builder.Services.Configure<IdentityOptions>(options =>
 {
     options.ClaimsIdentity.RoleClaimType = System.Security.Claims.ClaimTypes.Role;
 });
-
 
 builder.Services.AddCors(options =>
 {
@@ -32,7 +32,6 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-
 builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer((document, context, cancellationToken) =>
@@ -56,29 +55,26 @@ builder.Services.AddOpenApi(options =>
 
 var app = builder.Build();
 
-app.UseHttpsRedirection();
+// ĐÃ SỬA: Tạm thời tắt chuyển hướng HTTPS tự động nếu Render của bạn dùng giao thức proxy HTTP nội bộ (tránh lỗi vòng lặp)
+// app.UseHttpsRedirection(); 
 
 app.Use(async (context, next) =>
 {
     var path = context.Request.Path.Value;
-
 
     if (string.Equals(path, "/", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(path, "/trang-chu", StringComparison.OrdinalIgnoreCase))
     {
         context.Request.Path = "/index.html";
     }
-
     else if (string.Equals(path, "/dang-nhap", StringComparison.OrdinalIgnoreCase))
     {
         context.Request.Path = "/login.html";
     }
-
     else if (string.Equals(path, "/dang-ky", StringComparison.OrdinalIgnoreCase))
     {
         context.Request.Path = "/register.html";
     }
-
     else if (string.Equals(path, "/dat-ban", StringComparison.OrdinalIgnoreCase))
     {
         context.Request.Path = "/order.html";
@@ -92,21 +88,14 @@ app.Use(async (context, next) =>
     await next();
 });
 
-
 app.UseStaticFiles();
-
-
 app.UseCors("AllowAll");
-
 app.UseAuthentication();
 app.UseAuthorization();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    app.MapScalarApiReference();
-}
-
+// 2. ĐÃ ĐỔI: Bỏ điều kiện IsDevelopment để khi lên Render bạn vẫn mở được giao diện test API /scalar/v1
+app.MapOpenApi();
+app.MapScalarApiReference();
 
 app.MapIdentityApi<IdentityUser>();
 app.MapControllers();
