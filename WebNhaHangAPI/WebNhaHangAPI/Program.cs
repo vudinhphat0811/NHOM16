@@ -6,8 +6,7 @@ using WebNhaHangAPI.Data;
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. ĐÃ ĐỔI: Chuỗi kết nối trỏ thẳng lên database mây Clever Cloud của bạn
-var chuoiKetNoi = "server=bztgqose7xabliatj3rz-mysql.services.clever-cloud.com;port=3306;database=bztgqose7xabliatj3rz;user=upuauqgeul6xwjpm;password=kedUwT6udn4qWpyHehGz";
-
+var chuoiKetNoi = "server=bztgqose7xabliatj3rz-mysql.services.clever-cloud.com;port=3306;database=bztgqose7xabliatj3rz;user=upuauqgeul6xwjpm;password=kedUwT6udn4qWpyHehGz;SslMode=None";
 builder.Services.AddDbContext<DbContextNhaHang>(options =>
     options.UseMySql(chuoiKetNoi, ServerVersion.AutoDetect(chuoiKetNoi)));
 
