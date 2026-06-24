@@ -5,7 +5,7 @@ using WebNhaHangAPI.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. ĐÃ ĐỔI: Chuỗi kết nối trỏ thẳng lên database mây Clever Cloud của bạn
+// 1. Chuỗi kết nối database mây Clever Cloud
 var chuoiKetNoi = "server=bztgqose7xabliatj3rz-mysql.services.clever-cloud.com;port=3306;database=bztgqose7xabliatj3rz;user=upuauqgeul6xwjpm;password=kedUwT6udn4qWpyHehGz;SslMode=None";
 builder.Services.AddDbContext<DbContextNhaHang>(options =>
     options.UseMySql(chuoiKetNoi, ServerVersion.AutoDetect(chuoiKetNoi)));
@@ -17,6 +17,12 @@ builder.Services.AddIdentityApiEndpoints<IdentityUser>()
 builder.Services.Configure<IdentityOptions>(options =>
 {
     options.ClaimsIdentity.RoleClaimType = System.Security.Claims.ClaimTypes.Role;
+    // Cấu hình pass đơn giản hơn cho đồ án nếu cần thiết
+    options.Password.RequireDigit = true;
+    options.Password.RequiredLength = 6;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireLowercase = false;
 });
 
 builder.Services.AddCors(options =>
@@ -54,9 +60,7 @@ builder.Services.AddOpenApi(options =>
 
 var app = builder.Build();
 
-// ĐÃ SỬA: Tạm thời tắt chuyển hướng HTTPS tự động nếu Render của bạn dùng giao thức proxy HTTP nội bộ (tránh lỗi vòng lặp)
-// app.UseHttpsRedirection(); 
-
+// Điều hướng file tĩnh
 app.Use(async (context, next) =>
 {
     var path = context.Request.Path.Value;
@@ -92,19 +96,19 @@ app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 2. ĐÃ ĐỔI: Bỏ điều kiện IsDevelopment để khi lên Render bạn vẫn mở được giao diện test API /scalar/v1
 app.MapOpenApi();
 app.MapScalarApiReference();
-
 app.MapIdentityApi<IdentityUser>();
 app.MapControllers();
 
+// ================= TỰ ĐỘNG KHỞI TẠO VAI TRÒ VÀ TÀI KHOẢN ADMIN =================
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
 
-    string[] tenCacQuyen = { "Admin", "KhachHang" };
+    // ĐÃ CHỈNH: Đổi "KhachHang" thành "Customer" để đồng bộ 100% với file Front-end tab-role.html
+    string[] tenCacQuyen = { "Admin", "Customer" };
     foreach (var tenQuyen in tenCacQuyen)
     {
         if (!await roleManager.RoleExistsAsync(tenQuyen))
@@ -113,9 +117,29 @@ using (var scope = app.Services.CreateScope())
         }
     }
 
-    var adminUser = await userManager.FindByEmailAsync("admin@gmail.com");
-    if (adminUser != null)
+    // ĐÃ THÊM: Tự động kiểm tra và tạo thẳng tài khoản Admin nếu chưa tồn tại trên database mây
+    string adminEmail = "admin@gmail.com";
+    var adminUser = await userManager.FindByEmailAsync(adminEmail);
+
+    if (adminUser == null)
     {
+        var newAdmin = new IdentityUser
+        {
+            UserName = adminEmail,
+            Email = adminEmail,
+            EmailConfirmed = true
+        };
+
+        // Tạo tài khoản với mật khẩu mặc định: Admin@123
+        var createAdminResult = await userManager.CreateAsync(newAdmin, "Admin@123");
+        if (createAdminResult.Succeeded)
+        {
+            await userManager.AddToRoleAsync(newAdmin, "Admin");
+        }
+    }
+    else
+    {
+        // Nếu tài khoản đã có sẵn nhưng chưa được set quyền thì ép gán quyền Admin luôn
         if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
         {
             await userManager.AddToRoleAsync(adminUser, "Admin");
