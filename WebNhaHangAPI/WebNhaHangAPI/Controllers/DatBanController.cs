@@ -179,7 +179,6 @@ namespace WebNhaHangAPI.Controllers
             await _context.SaveChangesAsync();
             return Ok(new { message = "Thanh toán thành công! Bàn ăn đã được dọn sạch về trạng thái trống." });
         }
-        // ADMIN THÊM HOẶC TĂNG MÓN ĂN (Dùng cho C# Razor/MVC)
         [HttpPost("admin-them-mon")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AdminAddFoodForm([FromForm] int datBanId, [FromForm] int monAnId, [FromForm] int soLuong, [FromForm] string returnUrl)
@@ -239,7 +238,50 @@ namespace WebNhaHangAPI.Controllers
             }
             return Redirect(returnUrl);
         }
+        // 9. API LẤY DANH SÁCH ĐƠN ĐÃ HOÀN THÀNH ĐỂ LÀM BÁO CÁO THỐNG KÊ
+        [HttpGet("don-da-hoan-thanh")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetCompletedOrders()
+        {
+            // Lọc ra các đơn có trạng thái "Đã thanh toán"
+            var danhSachDonXong = await _context.Set<DatBan>()
+                .Include(db => db.BanAn)
+                .Include(db => db.ChiTietGoiMons)
+                    .ThenInclude(ct => ct.MonAn)
+                .Where(db => db.TrangThai == "Đã thanh toán")
+                .OrderByDescending(db => db.Id) // Đơn mới thanh toán xếp lên đầu
+                .ToListAsync();
 
+            int tongSoDon = danhSachDonXong.Count;
+            decimal tongDoanhThu = 0;
+
+            foreach (var don in danhSachDonXong)
+            {
+                decimal tienMonAn = 0;
+                foreach (var chiTiet in don.ChiTietGoiMons)
+                {
+                    if (chiTiet.MonAn != null)
+                    {
+                        tienMonAn += chiTiet.MonAn.Gia * chiTiet.SoLuong;
+                    }
+                }
+
+                // Nếu có tiền món ăn thì tổng đơn đó bằng tiền món, ngược lại lấy tiền cọc
+                decimal thucThuDonNay = tienMonAn > 0 ? tienMonAn : don.TienCoc;
+
+                // Ép ngược giá trị thực thu này vào trường TienCoc để trả về Front-end hiển thị công khai
+                don.TienCoc = thucThuDonNay;
+
+                tongDoanhThu += thucThuDonNay;
+            }
+
+            return Ok(new
+            {
+                TongSoDonThànhCông = tongSoDon,
+                TongDoanhThuDuKien = tongDoanhThu,
+                DanhSachDon = danhSachDonXong
+            });
+        }
         // 8. ADMIN HOẶC KHÁCH HÀNG ÉP HỦY ĐƠN ĐẶT BÀN Ở BẤT KỲ TRẠNG THÁI NÀO ĐỂ GIẢI PHÓNG BÀN VỀ TRỐNG
         [HttpPut("{id}/khach-huy-ban")]
         [Authorize]

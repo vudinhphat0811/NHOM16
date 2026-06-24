@@ -31,6 +31,36 @@
 
     <div id="modal-container"></div>
 
+    <div id="statInvoiceDetailModal" class="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 hidden opacity-0 transition-opacity duration-300 pointer-events-auto">
+        <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl transform scale-95 transition-transform duration-300 space-y-4">
+
+            <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+                <h3 class="text-sm font-black text-gray-800 flex items-center space-x-2">
+                    <i class="fa-solid fa-receipt text-orange-700"></i>
+                    <span>CHI TIẾT HÓA ĐƠN ĐẶT TRƯỚC</span>
+                </h3>
+                <button onclick="closeStatDetailModal()" class="text-gray-400 hover:text-gray-600 cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="border border-gray-100 bg-gray-50/30 rounded-xl p-4 space-y-2 text-xs font-bold text-gray-500">
+                <p>Mã đơn đặt: <span id="lblModalOrderCode" class="text-orange-700 font-black">#BK---</span></p>
+                <p>Tên khách: <span id="lblModalClientName" class="text-gray-800 font-extrabold">---</span></p>
+                <p>Số điện thoại: <span id="lblModalClientPhone" class="text-gray-700">---</span></p>
+                <p>Trạng thái cọc: <span id="lblModalDepositStatus" class="text-emerald-600">---</span></p>
+                <p>Ghi chú: <span id="lblModalNotes" class="text-gray-400 italic font-medium">---</span></p>
+            </div>
+
+            <div class="space-y-2">
+                <h4 class="text-xs font-black text-gray-800 uppercase tracking-wider"><i class="fa-solid fa-utensils mr-1 text-orange-600"></i> Danh sách món đặt:</h4>
+                <div id="divModalDishesContainer" class="border border-gray-100 rounded-xl p-3 max-h-[160px] overflow-y-auto space-y-2 text-xs font-bold text-gray-600 divide-y divide-gray-50"></div>
+            </div>
+
+            <button type="button" onclick="closeStatDetailModal()" class="w-full bg-[#a13d06] hover:bg-[#853204] text-white font-bold py-2.5 rounded-xl transition uppercase tracking-wider text-xs cursor-pointer text-center">
+                Đóng cửa sổ
+            </button>
+        </div>
+    </div>
+
     <aside class="w-full md:w-64 bg-[#2d3136] text-gray-400 flex flex-col justify-between shrink-0 border-r border-gray-700 sticky top-0 min-h-screen">
         <div>
             <div class="p-6 border-b border-gray-700/50">
@@ -40,10 +70,21 @@
                 <p class="text-[10px] text-gray-400 font-semibold tracking-wider mt-0.5 uppercase">Gourmet Portal</p>
             </div>
             <nav class="p-4 space-y-1 text-xs font-bold tracking-wide">
-                <button onclick="switchTab('order', this)" class="tab-btn active w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left cursor-pointer"><i class="fa-regular fa-rectangle-list text-sm w-5"></i> <span>Order Management</span></button>
-                <button onclick="switchTab('table', this)" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left cursor-pointer"><i class="fa-solid fa-map text-sm w-5"></i> <span>Table Map</span></button>
-                <button onclick="switchTab('menu', this)" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left cursor-pointer"><i class="fa-solid fa-utensils text-sm w-5"></i> <span>Menu Management</span></button>
-                <button onclick="switchTab('category', this)" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left cursor-pointer"><i class="fa-solid fa-folder-open text-sm w-5"></i> <span>Category Management</span></button>
+                <button onclick="switchTab('order', this)" class="tab-btn active w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left cursor-pointer">
+                    <i class="fa-regular fa-rectangle-list text-sm w-5"></i> <span>Order Management</span>
+                </button>
+                <button onclick="switchTab('table', this)" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left cursor-pointer">
+                    <i class="fa-solid fa-map text-sm w-5"></i> <span>Table Map</span>
+                </button>
+                <button onclick="switchTab('menu', this)" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left cursor-pointer">
+                    <i class="fa-solid fa-utensils text-sm w-5"></i> <span>Menu Management</span>
+                </button>
+                <button onclick="switchTab('category', this)" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left cursor-pointer">
+                    <i class="fa-solid fa-folder-open text-sm w-5"></i> <span>Category Management</span>
+                </button>
+                <button onclick="moTabThongKe(this)" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left cursor-pointer hover:bg-gray-700/30 transition">
+                    <i class="fa-solid fa-chart-pie text-sm w-5 text-amber-500"></i> <span class="text-gray-300">Statistical Report</span>
+                </button>
             </nav>
         </div>
         <div class="border-t border-gray-700/50 bg-[#25282d] p-4 space-y-4">
@@ -58,9 +99,22 @@
     <main class="flex-grow flex flex-col min-h-screen overflow-x-hidden">
         <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-xs sticky top-0 z-40">
             <div id="lblHeaderContext" class="text-xs font-bold text-gray-800 uppercase tracking-wider">Order Management</div>
-            <div id="divHeaderSearchArea" class="relative min-w-[240px]">
-                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-                <input type="text" id="txtOrderSearch" onkeyup="handleOrderSearch()" placeholder="Tìm tên khách, SĐT..." class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-4 py-1.5 text-xs font-semibold focus:outline-none focus:border-[#cc4e11] focus:bg-white transition placeholder-gray-400">
+
+            <div class="flex items-center space-x-3">
+                <div id="divHeaderSearchArea" class="relative min-w-[240px]">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                    <input type="text"
+                           id="txtOrderSearch"
+                           onkeyup="dieuHuongTimKiem()"
+                           onkeydown="if(event.key === 'Enter') { event.preventDefault(); dieuHuongTimKiem(); }"
+                           placeholder="Tìm tên khách, SĐT, mã đơn..."
+                           class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-4 py-1.5 text-xs font-semibold focus:outline-none focus:border-[#cc4e11] focus:bg-white transition placeholder-gray-400">
+                </div>
+
+                <button id="btnExportExcel" onclick="xuatExcelDonHang()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 px-4 rounded-xl text-xs flex items-center space-x-2 transition cursor-pointer shadow-xs shrink-0 hidden">
+                    <i class="fa-solid fa-file-excel text-sm"></i>
+                    <span>Xuất File Excel</span>
+                </button>
             </div>
         </header>
 
@@ -68,5 +122,18 @@
     </main>
 
     <script src="dashboard.js"></script>
+    <script src="statistics.js?v=999"></script>
+
+    <script>
+        function dieuHuongTimKiem() {
+            const context = document.getElementById('lblHeaderContext').innerText.toUpperCase();
+
+            if (context.includes("ORDER")) {
+                if (typeof handleAdminOrderSearch === "function") handleAdminOrderSearch();
+            } else if (context.includes("STATISTICAL") || context.includes("REPORT")) {
+                if (typeof handleStatisticsSearch === "function") handleStatisticsSearch();
+            }
+        }
+    </script>
 </body>
 </html>

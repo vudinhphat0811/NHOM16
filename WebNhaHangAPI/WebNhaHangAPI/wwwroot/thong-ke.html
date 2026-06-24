@@ -1,0 +1,182 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo Cáo Thống Kê Đơn Đặt Bàn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 font-sans antialiased">
+
+    <div class="flex h-screen">
+        <div class="w-64 bg-gray-900 text-white flex flex-col justify-between">
+            <div class="p-5">
+                <h1 class="text-xl font-bold tracking-wider text-amber-500 uppercase mb-8">
+                    <i class="fa-solid font-bold fa-utensils mr-2"></i>Nhà Hàng Admin
+                </h1>
+                <nav class="space-y-2">
+                    <a href="#" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition">
+                        <i class="fa-solid fa-table-list w-5"></i>
+                        <span>Đơn đặt bàn hiện tại</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg bg-amber-500 text-white font-medium shadow-lg shadow-amber-500/20">
+                        <i class="fa-solid fa-chart-pie w-5"></i>
+                        <span>Thống kê đơn đã xong</span>
+                    </a>
+                </nav>
+            </div>
+            <div class="p-5 border-t border-gray-800 text-sm text-gray-500">
+                &copy; 2026 Quản Lý Nhà Hàng
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-8">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Lịch Sử & Thống Kê Đơn Hoàn Thành</h2>
+                    <p class="text-sm text-gray-500">Xem lại các hóa đơn đã thanh toán và doanh thu thực tế</p>
+                </div>
+                <button onclick="taiDuLieuThongKe()" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm">
+                    <i class="fa-solid fa-rotate-right mr-2"></i>Làm mới dữ liệu
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-400 uppercase tracking-wider">Đơn Hoàn Thành</p>
+                        <h3 id="txt-tong-don" class="text-3xl font-bold text-gray-800 mt-1">0</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-green-50 text-green-500 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-400 uppercase tracking-wider">Doanh Thu Tích Lũy</p>
+                        <h3 id="txt-tong-doanh-thu" class="text-3xl font-bold text-gray-800 mt-1">0 đ</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-wallet"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-50 bg-gray-50/50">
+                    <h4 class="font-semibold text-gray-700">Chi tiết nhật ký hóa đơn</h4>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm text-gray-600">
+                        <thead>
+                            <tr class="bg-gray-100/70 text-gray-700 font-medium border-b border-gray-200">
+                                <th class="px-6 py-3.5">Mã Đơn</th>
+                                <th class="px-6 py-3.5">Bàn Ăn</th>
+                                <th class="px-6 py-3.5">Trạng Thái Cọc</th>
+                                <th class="px-6 py-3.5">PT Thanh Toán</th>
+                                <th class="px-6 py-3.5">Chi Tiết Món Ăn</th>
+                                <th class="px-6 py-3.5 text-right">Trạng Thái Tổng</th>
+                            </tr>
+                        </thead>
+                        <tbody id="container-danh-sach-don">
+                            <tr>
+                                <td colspan="6" class="text-center py-8 text-gray-400">
+                                    <i class="fa-solid fa-spinner fa-spin mr-2"></i> Đang tải dữ liệu báo cáo...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Cấu hình URL chứa API chạy Back-end của bạn trên Render
+        const API_URL = "https://webnhahangapi.onrender.com/api/DatBan/don-da-hoan-thanh";
+
+        async function taiDuLieuThongKe() {
+            try {
+                // Lấy token đăng nhập được lưu trong localStorage (nếu có dùng cơ chế đăng nhập)
+                const token = localStorage.getItem("AdminToken");
+
+                const response = await fetch(API_URL, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        // Đưa token bảo mật vào để thỏa mãn [Authorize(Roles = "Admin")]
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error("Không thể lấy dữ liệu từ API hoặc bạn chưa đăng nhập Admin.");
+                }
+
+                const data = await response.json();
+
+                // 1. Cập nhật số liệu Widget tổng quan trên giao diện
+                document.getElementById("txt-tong-don").innerText = data.tongSoDonThànhCông;
+                document.getElementById("txt-tong-doanh-thu").innerText = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(data.tongDoanhThuDuKien);
+
+                // 2. Tạo giao diện các dòng bảng dựa trên danh sách hóa đơn trả về
+                const container = document.getElementById("container-danh-sach-don");
+                container.innerHTML = ""; // Xóa dòng chữ Loading tạm thời đi
+
+                if (data.danhSachDon.length === 0) {
+                    container.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-400">Chưa có đơn hàng nào hoàn thành!</td></tr>`;
+                    return;
+                }
+
+                data.danhSachDon.forEach(don => {
+                    // Gom tên các món ăn thành 1 chuỗi dài hiển thị
+                    let chuoiMonAn = don.chiTietGoiMons.map(ct =>
+                        `${ct.monAn ? ct.monAn.ten : 'Món ẩn'} (x${ct.soLuong})`
+                    ).join(", ");
+
+                    if(!chuoiMonAn) chuoiMonAn = "<span class='text-gray-400 italic'>Không gọi món</span>";
+
+                    const rowHTML = `
+                        <tr class="border-b border-gray-100 hover:bg-gray-50/80 transition">
+                            <td class="px-6 py-4 font-semibold text-gray-900">#${don.id}</td>
+                            <td class="px-6 py-4">
+                                <span class="bg-blue-50 text-blue-600 px-2 py-1 rounded-md font-medium text-xs">
+                                    Bàn số ${don.banAnId}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 rounded-full text-xs font-semibold ${don.trangThaiCoc === 'Đã cọc' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                                    ${don.trangThaiCoc}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-gray-500">${don.phuongThucThanhToan || 'Chưa rõ'}</td>
+                            <td class="px-6 py-4 max-w-xs truncate" title="${chuoiMonAn}">${chuoiMonAn}</td>
+                            <td class="px-6 py-4 text-right">
+                                <span class="bg-green-500 text-white px-2.5 py-1 rounded-lg text-xs font-bold shadow-sm shadow-green-500/10">
+                                    ${don.trangThai}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                    container.insertAdjacentHTML("beforeend", rowHTML);
+                });
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById("container-danh-sach-don").innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-8 text-red-500 font-medium">
+                            <i class="fa-solid fa-circle-exclamation mr-2"></i> Lỗi: ${error.message}
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Tự động kích hoạt gọi dữ liệu ngay khi vừa tải xong trang web
+        document.addEventListener("DOMContentLoaded", taiDuLieuThongKe);
+    </script>
+</body>
+</html>
